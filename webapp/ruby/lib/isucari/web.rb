@@ -205,24 +205,13 @@ module Isucari
         get_config_by_name('shipment_service_url') || DEFAULT_SHIPMENT_SERVICE_URL
       end
 
-      IMG_SERVER_MAP = ENV['IMG_SERVER_MAP']&.split(?,)&.map { |_| _.split(?:,2) }&.to_h
       if ENV['LOCAL']
         def get_image_url(image_name)
           "https://isucon9.catatsuy.org/upload/#{image_name}"
         end
       else
         def get_image_url(image_name)
-          if IMG_SERVER_MAP
-            num, path = image_name.split(?/,2)
-            srv = IMG_SERVER_MAP[num]
-            if num && path && srv
-              "http://#{srv}/upload/#{image_name}"
-            else
-              "/upload/#{image_name}"
-            end
-          else
-            "/upload/#{image_name}"
-          end
+          "/upload/#{image_name}"
         end
       end
 
