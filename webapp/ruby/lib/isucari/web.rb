@@ -210,7 +210,7 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         db.xquery(
-          "SELECT *, " +
+          "SELECT `items`.*, " +
           "`users`.`account_name`, `users`.`num_sell_items`, " +
           "`categories`.`parent_id`, `categories`.`category_name` " +
           "FROM `items` " +
@@ -228,7 +228,7 @@ module Isucari
       else
         # 1st page
         db.xquery(
-          "SELECT *, " +
+          "SELECT `items`.*, " +
           "`users`.`account_name`, `users`.`num_sell_items`, " +
           "`categories`.`parent_id`, `categories`.`category_name` " +
           "FROM `items` " +
@@ -354,7 +354,7 @@ module Isucari
         # paging
         begin
           db.xquery(
-            "SELECT *, " +
+            "SELECT `items`.*, " +
             "`users`.`account_name`, `users`.`num_sell_items` " +
             "FROM `items` " +
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
@@ -381,7 +381,7 @@ module Isucari
         # 1st page
         begin
           db.xquery(
-            "SELECT *, " +
+            "SELECT `items`.*, " +
             "`users`.`account_name`, `users`.`num_sell_items` " +
             "FROM `items` "+
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
