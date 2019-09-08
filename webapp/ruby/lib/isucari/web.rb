@@ -792,7 +792,7 @@ module Isucari
 
       db.query('BEGIN')
 
-      target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+      target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
       if target_item['status'] != ITEM_STATUS_ON_SALE
         db.query('ROLLBACK')
@@ -836,7 +836,7 @@ module Isucari
       db.query('BEGIN')
 
       begin
-        target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+        target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
         if target_item.nil?
           db.query('ROLLBACK')
@@ -1006,7 +1006,7 @@ module Isucari
       if seller.nil?
         halt_with_error 404, 'user not found'
       end
-      seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', user['id']).first
+      seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? LOCK IN SHARE MODE', user['id']).first
 
       begin
         db.xquery('INSERT INTO `items` (`seller_id`, `status`, `name`, `price`, `description`,`image_name`,`category_id`) VALUES (?, ?, ?, ?, ?, ?, ?)', seller['id'], ITEM_STATUS_ON_SALE, name, price, description, img_name, category['id'])
@@ -1051,7 +1051,7 @@ module Isucari
       db.query('BEGIN')
 
       begin
-        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
         if item.nil?
           db.query('ROLLBACK')
@@ -1069,7 +1069,7 @@ module Isucari
       end
 
       begin
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `id` = ? FOR UPDATE', transaction_evidence['id']).first
+        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `id` = ? LOCK IN SHARE MODE', transaction_evidence['id']).first
 
         if transaction_evidence.nil?
           db.query('ROLLBACK')
@@ -1087,7 +1087,7 @@ module Isucari
       end
 
       begin
-        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? FOR UPDATE', transaction_evidence['id']).first
+        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? LOCK IN SHARE MODE', transaction_evidence['id']).first
 
         if shipping.nil?
           db.query('ROLLBACK')
@@ -1146,7 +1146,7 @@ module Isucari
       db.query('BEGIN')
 
       begin
-        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
         if item.nil?
           db.query('ROLLBACK')
@@ -1164,7 +1164,7 @@ module Isucari
       end
 
       begin
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `id` = ? FOR UPDATE', transaction_evidence['id']).first
+        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `id` = ? LOCK IN SHARE MODE', transaction_evidence['id']).first
 
         if transaction_evidence.nil?
           db.query('ROLLBACK')
@@ -1181,7 +1181,7 @@ module Isucari
       end
 
       begin
-        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? FOR UPDATE', transaction_evidence['id']).first
+        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? LOCK IN SHARE MODE', transaction_evidence['id']).first
 
         if shipping.nil?
           db.query('ROLLBACK')
@@ -1253,7 +1253,7 @@ module Isucari
       db.query('BEGIN')
 
       begin
-        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+        item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
         if item.nil?
           db.query('ROLLBACK')
@@ -1271,7 +1271,7 @@ module Isucari
       end
 
       begin
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ? FOR UPDATE', item_id).first
+        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ? LOCK IN SHARE MODE', item_id).first
 
         if transaction_evidence.nil?
           db.query('ROLLBACK')
@@ -1289,7 +1289,7 @@ module Isucari
       end
 
       begin
-        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? FOR UPDATE', transaction_evidence['id']).first
+        shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ? LOCK IN SHARE MODE', transaction_evidence['id']).first
 
         if shipping.nil?
           db.query('ROLLBACK')
@@ -1388,7 +1388,7 @@ module Isucari
       db.query('BEGIN')
 
       begin
-        target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? FOR UPDATE', item_id).first
+        target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ? LOCK IN SHARE MODE', item_id).first
 
         if target_item.nil?
           db.query('ROLLBACK')
@@ -1406,7 +1406,7 @@ module Isucari
       end
 
       begin
-        seller = db.xquery('SELECT * FROM `users` WHERE `id` = ? FOR UPDATE', user['id']).first
+        seller = db.xquery('SELECT * FROM `users` WHERE `id` = ? LOCK IN SHARE MODE', user['id']).first
 
         if seller.nil?
           db.query('ROLLBACK')
