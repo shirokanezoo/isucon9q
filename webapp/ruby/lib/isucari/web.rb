@@ -225,6 +225,8 @@ module Isucari
       end
 
       def cache_with(key, options = {}, &block)
+        return block.call if ENV['NO_CACHE']
+
         key = "isucari:#{key}"
         cache = redis.get(key)
         return cache if cache && (options[:if].nil? || options[:if])
@@ -236,12 +238,16 @@ module Isucari
       end
 
       def purge_cache(*keys)
+        return if if ENV['NO_CACHE']
+
         keys.each do |key|
           redis.del("isucari:#{key}")
         end
       end
 
       def purge_item(item)
+        return if if ENV['NO_CACHE']
+
         purge_cache("new_items")
         purge_cache("items/#{item['id']}")
         purge_category({ 'id' => item['category_id'] })
@@ -250,12 +256,16 @@ module Isucari
       end
 
       def purge_category(category)
+        return if if ENV['NO_CACHE']
+
         category = get_category_by_id(category['id'])
         purge_cache("categories/#{category['id']}")
         purge_cache("categories/#{category['parent_id']}")
       end
 
       def purge_user(user)
+        return if if ENV['NO_CACHE']
+
         purge_cache("users/#{user['id']}")
       end
     end
