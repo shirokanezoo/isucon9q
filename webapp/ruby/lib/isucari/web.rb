@@ -333,12 +333,11 @@ module Isucari
             "FROM `items` " \
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
-            "WHERE `items`.`status` IN (?, ?) " \
+            "WHERE `items`.`status` IN (?) " \
             "AND `items`.`seller_id` != ? " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-            ITEM_STATUS_ON_SALE,
-            ITEM_STATUS_SOLD_OUT,
+            [ITEM_STATUS_ON_SALE],
             get_current_user_id,
             Time.at(created_at),
             Time.at(created_at),
@@ -354,11 +353,10 @@ module Isucari
             "FROM `items` " \
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
-            "WHERE `status` IN (?, ?) " \
+            "WHERE `status` IN (?) " \
             "AND `items`.`seller_id` != ? " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-            ITEM_STATUS_ON_SALE,
-            ITEM_STATUS_SOLD_OUT,
+            [ITEM_STATUS_ON_SALE],
             get_current_user_id
           )
         end
