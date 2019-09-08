@@ -23,11 +23,11 @@ expire_logs_days	= 10
 max_binlog_size   = 100M
 
 ## slow query log
-slow_query_log
-slow_query_log_file = mysql-slow.log
-log_slow_admin_statements
-log_slow_slave_statements
-long_query_time = 0.1
+# slow_query_log
+# slow_query_log_file = mysql-slow.log
+# log_slow_admin_statements
+# log_slow_slave_statements
+# long_query_time = 0.1
 
 ## innodb
 #innodb_strict_mode
