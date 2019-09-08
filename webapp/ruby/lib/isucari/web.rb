@@ -8,8 +8,8 @@ require 'isucari/api'
 
 module Isucari
   class Web < Sinatra::Base
-    DEFAULT_PAYMENT_SERVICE_URL = 'http://localhost:5555'
-    DEFAULT_SHIPMENT_SERVICE_URL = 'http://localhost:7000'
+    DEFAULT_PAYMENT_SERVICE_URL = 'https://payment.isucon9q.catatsuy.org'
+    DEFAULT_SHIPMENT_SERVICE_URL = 'https://shipment.isucon9q.catatsuy.org'
 
     ITEM_MIN_PRICE = 100
     ITEM_MAX_PRICE = 1000000
