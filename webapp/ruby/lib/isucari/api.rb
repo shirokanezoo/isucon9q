@@ -57,7 +57,7 @@ module Isucari
       json = JSON.parse(res.body)
 
       reserve_id = json['reserve_id']
-      cache_key = "isucari:#{key}/#{reserve_id}"
+      cache_key = "isucari:#{shipment_url}/status/#{reserve_id}"
       redis.set(cache_key, { status: 'initial', reserve_time: json['reserve_time'] }.to_json)
 
       json
@@ -82,7 +82,7 @@ module Isucari
 
       json = JSON.parse(res.body)
 
-      cache_key = "isucari:#{key}/#{reserve_id}"
+      cache_key = "isucari:#{shipment_url}/status/#{reserve_id}"
       redis.del(cache_key)
 
       json

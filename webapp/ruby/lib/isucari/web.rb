@@ -732,7 +732,8 @@ module Isucari
 
       begin
         scr = api_client.shipment_create(get_shipment_service_url, to_address: buyer['address'], to_name: buyer['account_name'], from_address: seller['address'], from_name: seller['account_name'])
-      rescue
+      rescue => e
+        puts e.full_message
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
       end
@@ -917,7 +918,7 @@ module Isucari
       end
 
       begin
-        img = api_client.shipment_request(get_shipment_service_url, reserve_id: shipping['reserve_id'])
+        img = api_client.shipment_request(get_shipment_service_url, shipping['reserve_id'])
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
