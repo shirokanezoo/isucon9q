@@ -421,13 +421,13 @@ module Isucari
         # paging
         begin
           db.xquery(
-            "SELECT `items`.*, " +
-            "`users`.`account_name`, `users`.`num_sell_items` " +
-            "FROM `items` " +
-            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " +
-            "AND `items`.`status` IN (?, ?, ?, ?, ?) " +
-            "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " +
+            "SELECT `items`.*, " \
+            "`users`.`account_name`, `users`.`num_sell_items` " \
+            "FROM `items` " \
+            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
+            "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
+            "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
             user['id'],
             user['id'],
@@ -448,12 +448,12 @@ module Isucari
         # 1st page
         begin
           db.xquery(
-            "SELECT `items`.*, " +
-            "`users`.`account_name`, `users`.`num_sell_items` " +
-            "FROM `items` "+
-            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " +
-            "AND `items`.`status` IN (?, ?, ?, ?, ?) " +
+            "SELECT `items`.*, " \
+            "`users`.`account_name`, `users`.`num_sell_items` " \
+            "FROM `items` " \
+            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
+            "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
             user['id'],
             user['id'],
