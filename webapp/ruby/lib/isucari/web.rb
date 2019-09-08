@@ -898,11 +898,11 @@ module Isucari
       shipment = Expeditor::Command.new(service: EXPEDITOR) do
         api_client.shipment_create(get_shipment_service_url, to_address: buyer['address'], to_name: buyer['account_name'], from_address: seller['address'], from_name: seller['account_name'])
       end
-      shipment.start
+      shipment.start_with_retry(tries: 3, sleep: 1, on: [StandardError])
       payment = Expeditor::Command.new(service: EXPEDITOR) do
         api_client.payment_token(get_payment_service_url, shop_id: PAYMENT_SERVICE_ISUCARI_SHOPID, token: token, api_key: PAYMENT_SERVICE_ISUCARI_APIKEY, price: target_item['price'])
       end
-      payment.start
+      payment.start_with_retry(tries: 3, sleep: 1, on: [StandardError])
 
       begin
         scr = shipment.get
