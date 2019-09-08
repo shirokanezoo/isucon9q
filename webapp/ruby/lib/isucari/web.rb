@@ -156,11 +156,11 @@ module Isucari
 
         return unless user_id
 
-        db.xquery('SELECT * FROM `users` WHERE `id` = ?', user_id).first
+        db.xquery('SELECT `users`.*, `user_stats`.`num_sell_items`, `user_stats`.`last_bump` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
       end
 
       def get_user_simple_by_id(user_id)
-        user = db.xquery('SELECT * FROM `users` WHERE `id` = ?', user_id).first
+        user = db.xquery('SELECT `users`.`id`, `users`.`account_name`, `user_stats`.`num_sell_items` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
 
         return if user.nil?
 
@@ -248,10 +248,11 @@ module Isucari
         # paging
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `users`.`num_sell_items`, " \
+          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
           "`categories`.`parent_id`, `categories`.`category_name` " \
           "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
           "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -266,10 +267,11 @@ module Isucari
         # 1st page
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `users`.`num_sell_items`, " \
+          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
           "`categories`.`parent_id`, `categories`.`category_name` " \
           "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
           "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
           "WHERE `status` IN (?, ?) " \
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
@@ -422,9 +424,10 @@ module Isucari
         begin
           db.xquery(
             "SELECT `items`.*, " \
-            "`users`.`account_name`, `users`.`num_sell_items` " \
+            "`users`.`account_name`, `user_stats`.`num_sell_items` " \
             "FROM `items` " \
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -449,9 +452,10 @@ module Isucari
         begin
           db.xquery(
             "SELECT `items`.*, " \
-            "`users`.`account_name`, `users`.`num_sell_items` " \
+            "`users`.`account_name`, `user_stats`.`num_sell_items` " \
             "FROM `items` " \
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
@@ -765,7 +769,8 @@ module Isucari
       end
 
       begin
-        seller = db.xquery('SELECT * FROM `users` WHERE `id` = ? FOR UPDATE', target_item['seller_id']).first
+        seller = db.xquery('SELECT * FROM `users` WHERE `id` = ?', target_item['seller_id']).first
+        _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', target_item['seller_id']).first
 
         if seller.nil?
           db.query('ROLLBACK')
@@ -895,6 +900,7 @@ module Isucari
 
       db.query('BEGIN')
 
+      _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', user['id']).first
       seller = db.xquery('SELECT * FROM `users` WHERE `id` = ? FOR UPDATE', user['id']).first
       if seller.nil?
         halt_with_error 404, 'user not found'
@@ -911,7 +917,7 @@ module Isucari
 
       now = Time.now
       begin
-        db.xquery('UPDATE `users` SET `num_sell_items` = ?, `last_bump` = ? WHERE `id` = ?', seller['num_sell_items'] + 1, now, seller['id'])
+        db.xquery('UPDATE `user_stats` SET `num_sell_items` = ?, `last_bump` = ? WHERE `user_id` = ?', seller['num_sell_items'] + 1, now, seller['id'])
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
@@ -1299,7 +1305,7 @@ module Isucari
       end
 
       begin
-        db.xquery('UPDATE `users` SET `last_bump` = ? WHERE id = ?', now, seller['id'])
+        db.xquery('UPDATE `user_stats` SET `last_bump` = ? WHERE user_id = ?', now, seller['id'])
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
@@ -1373,8 +1379,16 @@ module Isucari
 
       hashed_password = BCrypt::Password.create(password, 'cost' => BCRYPT_COST)
 
-      db.xquery('INSERT INTO `users` (`account_name`, `hashed_password`, `address`) VALUES (?, ?, ?)', account_name, hashed_password, address)
-      user_id = db.last_id
+      begin
+        db.query('BEGIN')
+        db.xquery('INSERT INTO `users` (`account_name`, `hashed_password`, `address`) VALUES (?, ?, ?)', account_name, hashed_password, address)
+        user_id = db.last_id
+        db.xquery('INSERT INTO `user_stats` (`user_id`) VALUES (?)', user_id)
+        db.query('COMMIT')
+      rescue
+        db.query('ROLLBACK')
+        raise
+      end
 
       user = {
         'id' => user_id,
