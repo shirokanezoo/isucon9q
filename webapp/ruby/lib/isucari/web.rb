@@ -215,14 +215,14 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         db.xquery(
-          "SELECT `items`.*, " +
-          "`users`.`account_name`, `users`.`num_sell_items`, " +
-          "`categories`.`parent_id`, `categories`.`category_name` " +
-          "FROM `items` " +
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " +
-          "WHERE `items`.`status` IN (?, ?) " +
-          "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " +
+          "SELECT `items`.*, " \
+          "`users`.`account_name`, `users`.`num_sell_items`, " \
+          "`categories`.`parent_id`, `categories`.`category_name` " \
+          "FROM `items` " \
+          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
+          "WHERE `items`.`status` IN (?, ?) " \
+          "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
           ITEM_STATUS_ON_SALE,
           ITEM_STATUS_SOLD_OUT,
@@ -233,13 +233,13 @@ module Isucari
       else
         # 1st page
         db.xquery(
-          "SELECT `items`.*, " +
-          "`users`.`account_name`, `users`.`num_sell_items`, " +
-          "`categories`.`parent_id`, `categories`.`category_name` " +
-          "FROM `items` " +
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " +
-          "WHERE `status` IN (?, ?) " +
+          "SELECT `items`.*, " \
+          "`users`.`account_name`, `users`.`num_sell_items`, " \
+          "`categories`.`parent_id`, `categories`.`category_name` " \
+          "FROM `items` " \
+          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
+          "WHERE `status` IN (?, ?) " \
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
           ITEM_STATUS_ON_SALE,
           ITEM_STATUS_SOLD_OUT
