@@ -222,6 +222,39 @@ module Isucari
       def halt_with_error(status = 500, error = 'unknown')
         halt status, { 'error' => error }.to_json
       end
+
+      def cache_with(key, options = {}, &block)
+        key = "isucari:#{key}"
+        cache = redis.get(key)
+        return cache if cache && (options[:if].nil? || options[:if])
+
+        cache = block.call
+        redis.set(key, cache) if options[:if].nil? || options[:if]
+
+        cache
+      end
+
+      def purge_cache(*keys)
+        keys.each do |key|
+          redis.del("isucari:#{key}")
+        end
+      end
+
+      def purge_item(item)
+        purge_cache("new_items")
+        purge_cache("items/#{item['id']}")
+        purge_category({ 'id' => item['category_id'] })
+        purge_user({ 'id' => item['seller_id'] })
+        purge_user({ 'id' => item['buyer_id'] }) if item['buyer_id'] && item['buyer_id'] > 0
+      end
+
+      def purge_category(category)
+        purge_cache("categories/#{category['id']}")
+      end
+
+      def purge_user(user)
+        purge_cache("users/#{user['id']}")
+      end
     end
 
     # API
@@ -258,83 +291,85 @@ module Isucari
       item_id = params['item_id'].to_i
       created_at = params['created_at'].to_i
 
-      items = if item_id > 0 && created_at > 0
-        # paging
-        db.xquery(
-          "SELECT `items`.*, " \
-          "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
-          "`categories`.`parent_id`, `categories`.`category_name` " \
-          "FROM `items` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
-          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
-          "WHERE `items`.`status` IN (?, ?) " \
-          "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
-          "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-          ITEM_STATUS_ON_SALE,
-          ITEM_STATUS_SOLD_OUT,
-          Time.at(created_at),
-          Time.at(created_at),
-          item_id
-        )
-      else
-        # 1st page
-        db.xquery(
-          "SELECT `items`.*, " \
-          "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
-          "`categories`.`parent_id`, `categories`.`category_name` " \
-          "FROM `items` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
-          "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
-          "WHERE `status` IN (?, ?) " \
-          "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-          ITEM_STATUS_ON_SALE,
-          ITEM_STATUS_SOLD_OUT
-        )
-      end
+      cache_with('new_items', if: item_id == 0 && created_at == 0) do
+        items = if item_id > 0 && created_at > 0
+          # paging
+          db.xquery(
+            "SELECT `items`.*, " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
+            "`categories`.`parent_id`, `categories`.`category_name` " \
+            "FROM `items` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
+            "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
+            "WHERE `items`.`status` IN (?, ?) " \
+            "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
+            ITEM_STATUS_ON_SALE,
+            ITEM_STATUS_SOLD_OUT,
+            Time.at(created_at),
+            Time.at(created_at),
+            item_id
+          )
+        else
+          # 1st page
+          db.xquery(
+            "SELECT `items`.*, " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
+            "`categories`.`parent_id`, `categories`.`category_name` " \
+            "FROM `items` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
+            "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
+            "WHERE `status` IN (?, ?) " \
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
+            ITEM_STATUS_ON_SALE,
+            ITEM_STATUS_SOLD_OUT
+          )
+        end
 
-      item_simples = items.map do |item|
-        seller = {
-          'id' => item['seller_id'],
-          'account_name' => item['account_name'],
-          'num_sell_items' => item['num_sell_items']
+        item_simples = items.map do |item|
+          seller = {
+            'id' => item['seller_id'],
+            'account_name' => item['account_name'],
+            'num_sell_items' => item['num_sell_items']
+          }
+          halt_with_error 404, 'seller not found' if seller.nil?
+
+          parent_category_name = item['parent_id'] ? get_category_by_id(item['parent_id'])['category_name'] : nil
+          category = {
+            'id' => item['category_id'],
+            'parent_id' => item['parent_id'],
+            'category_name' => item['category_name'],
+            'parent_category_name' => parent_category_name
+          }
+          halt_with_error 404, 'category not found' if category.nil?
+
+          {
+            'id' => item['id'],
+            'seller_id' => item['seller_id'],
+            'seller' => seller,
+            'status' => item['status'],
+            'name' => item['name'],
+            'price' => item['price'],
+            'image_url' => get_image_url(item['image_name']),
+            'category_id' => item['category_id'],
+            'category' => category,
+            'created_at' => item['created_at'].to_i
+          }
+        end
+
+        has_next = false
+        if item_simples.length > ITEMS_PER_PAGE
+          has_next = true
+          item_simples = item_simples[0, ITEMS_PER_PAGE]
+        end
+
+        response = {
+          'items' => item_simples,
+          'has_next' => has_next
         }
-        halt_with_error 404, 'seller not found' if seller.nil?
 
-        parent_category_name = item['parent_id'] ? get_category_by_id(item['parent_id'])['category_name'] : nil
-        category = {
-          'id' => item['category_id'],
-          'parent_id' => item['parent_id'],
-          'category_name' => item['category_name'],
-          'parent_category_name' => parent_category_name
-        }
-        halt_with_error 404, 'category not found' if category.nil?
-
-        {
-          'id' => item['id'],
-          'seller_id' => item['seller_id'],
-          'seller' => seller,
-          'status' => item['status'],
-          'name' => item['name'],
-          'price' => item['price'],
-          'image_url' => get_image_url(item['image_name']),
-          'category_id' => item['category_id'],
-          'category' => category,
-          'created_at' => item['created_at'].to_i
-        }
+        response.to_json
       end
-
-      has_next = false
-      if item_simples.length > ITEMS_PER_PAGE
-        has_next = true
-        item_simples = item_simples[0, ITEMS_PER_PAGE]
-      end
-
-      response = {
-        'items' => item_simples,
-        'has_next' => has_next
-      }
-
-      response.to_json
     end
 
     # getNewCategoryItems
@@ -342,85 +377,87 @@ module Isucari
       root_category_id = params['root_category_id'].to_i
       halt_with_error 400, 'incorrect category id' if root_category_id <= 0
 
-      root_category = get_category_by_id(root_category_id)
-      halt_with_error 404, 'category not found' if root_category.nil?
-
-      category_ids = CATEGORIE_IDS_PER_PARENT[root_category_id]
-
       item_id = params['item_id'].to_i
       created_at = params['created_at'].to_i
 
-      items = if item_id > 0 && created_at > 0
-        db.xquery(
-          "SELECT `items`.*, " \
-          "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
-          "FROM `items` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
-          "WHERE `items`.`status` IN (?, ?) " \
-          "AND `items`.`category_id` IN (?) " +
-          "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
-          "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-          ITEM_STATUS_ON_SALE,
-          ITEM_STATUS_SOLD_OUT,
-          category_ids,
-          Time.at(created_at),
-          Time.at(created_at),
-          item_id
-        )
-      else
-        db.xquery(
-          "SELECT `items`.*, " \
-          "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
-          "FROM `items` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
-          "WHERE `items`.`status` IN (?, ?) " \
-          "AND `items`.`category_id` IN (?) " +
-          "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
-          ITEM_STATUS_ON_SALE,
-          ITEM_STATUS_SOLD_OUT,
-          category_ids
-        )
-      end
+      cache_with("categories/#{root_category_id}", if: item_id == 0 && created_at == 0) do
+        root_category = get_category_by_id(root_category_id)
+        halt_with_error 404, 'category not found' if root_category.nil?
 
-      item_simples = items.map do |item|
-        seller = {
-          'id' => item['seller_id'],
-          'account_name' => item['account_name'],
-          'num_sell_items' => item['num_sell_items']
+        category_ids = CATEGORIE_IDS_PER_PARENT[root_category_id]
+
+        items = if item_id > 0 && created_at > 0
+          db.xquery(
+            "SELECT `items`.*, " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
+            "FROM `items` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
+            "WHERE `items`.`status` IN (?, ?) " \
+            "AND `items`.`category_id` IN (?) " +
+            "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
+            ITEM_STATUS_ON_SALE,
+            ITEM_STATUS_SOLD_OUT,
+            category_ids,
+            Time.at(created_at),
+            Time.at(created_at),
+            item_id
+          )
+        else
+          db.xquery(
+            "SELECT `items`.*, " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
+            "FROM `items` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
+            "WHERE `items`.`status` IN (?, ?) " \
+            "AND `items`.`category_id` IN (?) " +
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
+            ITEM_STATUS_ON_SALE,
+            ITEM_STATUS_SOLD_OUT,
+            category_ids
+          )
+        end
+
+        item_simples = items.map do |item|
+          seller = {
+            'id' => item['seller_id'],
+            'account_name' => item['account_name'],
+            'num_sell_items' => item['num_sell_items']
+          }
+          halt_with_error 404, 'seller not found' if seller.nil?
+
+          category = get_category_by_id(item['category_id'])
+          halt_with_error 404, 'category not found' if category.nil?
+
+          {
+            'id' => item['id'],
+            'seller_id' => item['seller_id'],
+            'seller' => seller,
+            'status' => item['status'],
+            'name' => item['name'],
+            'price' => item['price'],
+            'image_url' => get_image_url(item['image_name']),
+            'category_id' => item['category_id'],
+            'category' => category,
+            'created_at' => item['created_at'].to_i
+          }
+        end
+
+        has_next = false
+        if item_simples.length > ITEMS_PER_PAGE
+          has_next = true
+          item_simples = item_simples[0, ITEMS_PER_PAGE]
+        end
+
+        response = {
+          'root_category_id' => root_category['id'],
+          'root_category_name' => root_category['category_name'],
+          'items' => item_simples,
+          'has_next' => has_next
         }
-        halt_with_error 404, 'seller not found' if seller.nil?
 
-        category = get_category_by_id(item['category_id'])
-        halt_with_error 404, 'category not found' if category.nil?
-
-        {
-          'id' => item['id'],
-          'seller_id' => item['seller_id'],
-          'seller' => seller,
-          'status' => item['status'],
-          'name' => item['name'],
-          'price' => item['price'],
-          'image_url' => get_image_url(item['image_name']),
-          'category_id' => item['category_id'],
-          'category' => category,
-          'created_at' => item['created_at'].to_i
-        }
+        response.to_json
       end
-
-      has_next = false
-      if item_simples.length > ITEMS_PER_PAGE
-        has_next = true
-        item_simples = item_simples[0, ITEMS_PER_PAGE]
-      end
-
-      response = {
-        'root_category_id' => root_category['id'],
-        'root_category_name' => root_category['category_name'],
-        'items' => item_simples,
-        'has_next' => has_next
-      }
-
-      response.to_json
     end
 
     # getTransactions
@@ -592,54 +629,56 @@ module Isucari
 
       halt_with_error 400, 'incorrect user id' if user_id <= 0
 
-      user_simple = get_user_simple_by_id(user_id)
-      halt_with_error 404, 'user not found' if user_simple.nil?
-
       item_id = params['item_id'].to_i
       created_at = params['created_at'].to_i
 
-      items = if item_id > 0 && created_at > 0
-        # paging
-        db.xquery("SELECT * FROM `items` WHERE `seller_id` = ? AND `status` IN (?, ?, ?) AND `created_at` <= ? AND `id` < ? ORDER BY `created_at` DESC, `id` DESC LIMIT #{ITEMS_PER_PAGE + 1}", user_simple['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, Time.at(created_at), item_id)
-      else
-        # 1st page
-        db.xquery("SELECT * FROM `items` WHERE `seller_id` = ? AND `status` IN (?, ?, ?) ORDER BY `created_at` DESC, `id` DESC LIMIT #{ITEMS_PER_PAGE + 1}", user_simple['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT)
-      end
+      cache_with("users/#{user_id}", if: item_id == 0 && created_at == 0) do
+        user_simple = get_user_simple_by_id(user_id)
+        halt_with_error 404, 'user not found' if user_simple.nil?
 
-      item_simples = items.map do |item|
-        seller = get_user_simple_by_id(item['seller_id'])
-        halt_with_error 404, 'seller not found' if seller.nil?
+        items = if item_id > 0 && created_at > 0
+          # paging
+          db.xquery("SELECT * FROM `items` WHERE `seller_id` = ? AND `status` IN (?, ?, ?) AND `created_at` <= ? AND `id` < ? ORDER BY `created_at` DESC, `id` DESC LIMIT #{ITEMS_PER_PAGE + 1}", user_simple['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, Time.at(created_at), item_id)
+        else
+          # 1st page
+          db.xquery("SELECT * FROM `items` WHERE `seller_id` = ? AND `status` IN (?, ?, ?) ORDER BY `created_at` DESC, `id` DESC LIMIT #{ITEMS_PER_PAGE + 1}", user_simple['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT)
+        end
 
-        category = get_category_by_id(item['category_id'])
-        halt_with_error 404, 'category not found' if category.nil?
+        item_simples = items.map do |item|
+          seller = get_user_simple_by_id(item['seller_id'])
+          halt_with_error 404, 'seller not found' if seller.nil?
 
-        {
-          'id' => item['id'],
-          'seller_id' => item['seller_id'],
-          'seller' => seller,
-          'status' => item['status'],
-          'name' => item['name'],
-          'price' => item['price'],
-          'image_url' => get_image_url(item['image_name']),
-          'category_id' => item['category_id'],
-          'category' => category,
-          'created_at' => item['created_at'].to_i
+          category = get_category_by_id(item['category_id'])
+          halt_with_error 404, 'category not found' if category.nil?
+
+          {
+            'id' => item['id'],
+            'seller_id' => item['seller_id'],
+            'seller' => seller,
+            'status' => item['status'],
+            'name' => item['name'],
+            'price' => item['price'],
+            'image_url' => get_image_url(item['image_name']),
+            'category_id' => item['category_id'],
+            'category' => category,
+            'created_at' => item['created_at'].to_i
+          }
+        end
+
+        has_next = false
+        if item_simples.length > ITEMS_PER_PAGE
+          has_next = true
+          item_simples = item_simples[0, ITEMS_PER_PAGE]
+        end
+
+        response = {
+          'user' => user_simple,
+          'items' => item_simples,
+          'has_next' => has_next
         }
+
+        response.to_json
       end
-
-      has_next = false
-      if item_simples.length > ITEMS_PER_PAGE
-        has_next = true
-        item_simples = item_simples[0, ITEMS_PER_PAGE]
-      end
-
-      response = {
-        'user' => user_simple,
-        'items' => item_simples,
-        'has_next' => has_next
-      }
-
-      response.to_json
     end
 
     # getItem
@@ -647,55 +686,57 @@ module Isucari
       item_id = params['item_id'].to_i
       halt_with_error 400, 'incorrect item id' if item_id <= 0
 
-      user = get_user
+      cache_with("items/#{item_id}") do
+        user = get_user
 
-      item = db.xquery('SELECT * FROM `items` WHERE `id` = ?', item_id).first
-      halt_with_error 404, 'item not found' if item.nil?
+        item = db.xquery('SELECT * FROM `items` WHERE `id` = ?', item_id).first
+        halt_with_error 404, 'item not found' if item.nil?
 
-      category = get_category_by_id(item['category_id'])
-      halt_with_error 404, 'category not found' if category.nil?
+        category = get_category_by_id(item['category_id'])
+        halt_with_error 404, 'category not found' if category.nil?
 
-      seller = get_user_simple_by_id(item['seller_id'])
-      halt_with_error 404, 'seller not found' if seller.nil?
+        seller = get_user_simple_by_id(item['seller_id'])
+        halt_with_error 404, 'seller not found' if seller.nil?
 
-      item_detail = {
-        'id' => item['id'],
-        'seller_id' => item['seller_id'],
-        'seller' => seller,
-        # buyer_id
-        # buyer
-        'status' => item['status'],
-        'name' => item['name'],
-        'price' => item['price'],
-        'description' => item['description'],
-        'image_url' => get_image_url(item['image_name']),
-        'category_id' => item['category_id'],
-        # transaction_evidence_id
-        # transaction_evidence_status
-        # shipping_status
-        'category' => category,
-        'created_at' => item['created_at'].to_i
-      }
+        item_detail = {
+          'id' => item['id'],
+          'seller_id' => item['seller_id'],
+          'seller' => seller,
+          # buyer_id
+          # buyer
+          'status' => item['status'],
+          'name' => item['name'],
+          'price' => item['price'],
+          'description' => item['description'],
+          'image_url' => get_image_url(item['image_name']),
+          'category_id' => item['category_id'],
+          # transaction_evidence_id
+          # transaction_evidence_status
+          # shipping_status
+          'category' => category,
+          'created_at' => item['created_at'].to_i
+        }
 
-      if (user['id'] == item['seller_id'] || user['id'] == item['buyer_id']) && item['buyer_id'] != 0
-        buyer = get_user_simple_by_id(item['buyer_id'])
-        halt_with_error 404, 'buyer not found' if buyer.nil?
+        if (user['id'] == item['seller_id'] || user['id'] == item['buyer_id']) && item['buyer_id'] != 0
+          buyer = get_user_simple_by_id(item['buyer_id'])
+          halt_with_error 404, 'buyer not found' if buyer.nil?
 
-        item_detail['buyer_id'] = item['buyer_id']
-        item_detail['buyer'] = buyer
+          item_detail['buyer_id'] = item['buyer_id']
+          item_detail['buyer'] = buyer
 
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ?', item['id']).first
-        unless transaction_evidence.nil?
-          shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ?', transaction_evidence['id']).first
-          halt_with_error 404, 'shipping not found' if shipping.nil?
+          transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ?', item['id']).first
+          unless transaction_evidence.nil?
+            shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ?', transaction_evidence['id']).first
+            halt_with_error 404, 'shipping not found' if shipping.nil?
 
-          item_detail['transaction_evidence_id'] = transaction_evidence['id']
-          item_detail['transaction_evidence_status'] = transaction_evidence['status']
-          item_detail['shipping_status'] = shipping['status']
+            item_detail['transaction_evidence_id'] = transaction_evidence['id']
+            item_detail['transaction_evidence_status'] = transaction_evidence['status']
+            item_detail['shipping_status'] = shipping['status']
+          end
         end
-      end
 
-      item_detail.to_json
+        item_detail.to_json
+      end
     end
 
     # postItemEdit
@@ -740,6 +781,7 @@ module Isucari
       target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ?', item_id).first
 
       db.query('COMMIT')
+      purge_item(target_item)
 
       response = {
         'item_id' => target_item['id'],
@@ -863,6 +905,7 @@ module Isucari
       end
 
       db.query('COMMIT')
+      purge_item(target_item)
 
       { 'transaction_evidence_id' => transaction_evidence_id }.to_json
     end
@@ -946,6 +989,9 @@ module Isucari
       end
 
       db.query('COMMIT')
+
+      purge_category(category)
+      purge_user(seller)
 
       { 'id' => item_id }.to_json
     end
@@ -1033,6 +1079,7 @@ module Isucari
       end
 
       db.query('COMMIT')
+      purge_item(item)
 
       response = {
         'path' => "/transactions/#{transaction_evidence['id']}.png",
@@ -1140,6 +1187,7 @@ module Isucari
 
 
       db.query('COMMIT')
+      purge_item(item)
 
       response = {
         transaction_evidence_id: transaction_evidence['id']
@@ -1254,6 +1302,7 @@ module Isucari
       end
 
       db.query('COMMIT')
+      purge_item(item)
 
       response = {
         transaction_evidence_id: transaction_evidence['id']
@@ -1363,6 +1412,7 @@ module Isucari
       end
 
       db.query('COMMIT')
+      purge_item(target_item)
 
       response = {
         'item_id' => target_item['id'],
