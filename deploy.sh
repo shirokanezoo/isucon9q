@@ -20,6 +20,7 @@ sudo nginx -s reload || :
 (
   cd ~/git/webapp/ruby
   source ~/env.secret.sh
+  export RACK_ENV=production
   export NEW_RELIC_LICENSE_KEY
   bundle exec newrelic deployment -r "$(git rev-parse HEAD)"
 )
