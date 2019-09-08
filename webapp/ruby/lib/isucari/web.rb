@@ -203,19 +203,19 @@ module Isucari
       def get_config_by_name(name)
         return redis.get("isucari:config:#{name}")
 
-        config = db.xquery('SELECT * FROM `configs` WHERE `name` = ?', name).first
+        #config = db.xquery('SELECT * FROM `configs` WHERE `name` = ?', name).first
 
-        return if config.nil?
+        #return if config.nil?
 
-        config['val']
+        #config['val']
       end
 
       def get_payment_service_url
-        get_config_by_name('payment_service_url') || DEFAULT_PAYMENT_SERVICE_URL
+        @payment_service_url ||= get_config_by_name('payment_service_url') || DEFAULT_PAYMENT_SERVICE_URL
       end
 
       def get_shipment_service_url
-        get_config_by_name('shipment_service_url') || DEFAULT_SHIPMENT_SERVICE_URL
+        @shipment_service_url ||= get_config_by_name('shipment_service_url') || DEFAULT_SHIPMENT_SERVICE_URL
       end
 
       if ENV['LOCAL']
