@@ -60,6 +60,8 @@ module Isucari
 
     BCRYPT_COST = 10
 
+    HOSTNUM = ENV['HOSTNUM']
+
     configure :development do
       require 'sinatra/reloader'
       register Sinatra::Reloader
@@ -720,11 +722,18 @@ module Isucari
 
       ext = '.jpg' if ext == '.jpeg'
 
-      img_name = "#{SecureRandom.hex(16)}#{ext}"
-
-      File.open("#{settings.root}/public/upload/#{img_name}", 'wb') do |f|
-        f.write img
+      if HOSTNUM
+        img_name = "#{HOSTNUM}/#{SecureRandom.hex(16)}#{ext}"
+        File.open("/home/isucon/public.local/upload/#{img_name}", 'wb') do |f|
+          f.write img
+        end
+      else
+        img_name = "#{SecureRandom.hex(16)}#{ext}"
+        File.open("#{settings.root}/public/upload/#{img_name}", 'wb') do |f|
+          f.write img
+        end
       end
+
 
       db.query('BEGIN')
 
