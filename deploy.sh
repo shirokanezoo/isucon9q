@@ -2,7 +2,7 @@
 selfsum="$(openssl dgst -sha256 "$0")"
 #export PATH=/home/isucon/local/ruby/bin:$PATH
 #
-cd ~/git/webapp/ruby/
+cd ~/git/
 git pull --rebase
 if [ "_${selfsum}" != "_$(openssl dgst -sha256 "$0")" ]; then
   exec $0
