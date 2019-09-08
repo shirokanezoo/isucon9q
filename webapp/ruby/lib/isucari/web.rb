@@ -158,12 +158,12 @@ module Isucari
 
         return unless user_id
 
-        db.xquery('SELECT `users`.*, `user_stats`.`num_sell_items`, `user_stats`.`last_bump` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
+        db.xquery('SELECT `user_stats`.* FROM `user_stats` WHERE `id` = ?', user_id).first
       end
 
       def get_user_simple_by_ids(user_ids)
         users = {}
-        db.xquery('SELECT id, account_name, num_sell_items FROM `users` WHERE `id` IN (?)', user_ids).each do |user|
+        db.xquery('SELECT id, account_name, num_sell_items FROM `user_stats` WHERE `id` IN (?)', user_ids).each do |user|
           users[user['id']] = {
             'id' => user['id'],
             'account_name' => user['account_name'],
@@ -174,7 +174,7 @@ module Isucari
       end
 
       def get_user_simple_by_id(user_id)
-        user = db.xquery('SELECT `users`.`id`, `users`.`account_name`, `user_stats`.`num_sell_items` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
+        user = db.xquery('SELECT `user_stats`.`id`, `user_stats`.`account_name`, `user_stats`.`num_sell_items` FROM `user_stats` WHERE `user_stats`.`id` = ?', user_id).first
 
         return if user.nil?
 
@@ -262,11 +262,10 @@ module Isucari
         # paging
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
+          "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
           "`categories`.`parent_id`, `categories`.`category_name` " \
           "FROM `items` " \
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
           "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -281,11 +280,10 @@ module Isucari
         # 1st page
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
+          "`user_stats`.`account_name`, `user_stats`.`num_sell_items`, " \
           "`categories`.`parent_id`, `categories`.`category_name` " \
           "FROM `items` " \
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
           "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
           "WHERE `status` IN (?, ?) " \
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
@@ -355,10 +353,9 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items` " \
+          "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
           "FROM `items` " \
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND `items`.`category_id` IN (?) " +
           "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -373,10 +370,9 @@ module Isucari
       else
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items` " \
+          "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
           "FROM `items` " \
-          "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND `items`.`category_id` IN (?) " +
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
@@ -440,10 +436,9 @@ module Isucari
         begin
           db.xquery(
             "SELECT `items`.*, " \
-            "`users`.`account_name`, `user_stats`.`num_sell_items` " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
             "FROM `items` " \
-            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id`" \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -469,10 +464,9 @@ module Isucari
         begin
           db.xquery(
             "SELECT `items`.*, " \
-            "`users`.`account_name`, `user_stats`.`num_sell_items` " \
+            "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
             "FROM `items` " \
-            "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
-            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
+            "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id`" \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
@@ -1428,7 +1422,7 @@ module Isucari
         db.query('BEGIN')
         db.xquery('INSERT INTO `users` (`account_name`, `hashed_password`, `address`) VALUES (?, ?, ?)', account_name, hashed_password, address)
         user_id = db.last_id
-        db.xquery('INSERT INTO `user_stats` (`user_id`) VALUES (?)', user_id)
+        db.xquery('INSERT INTO `user_stats` (`account_name`, `hashed_password`, `address`, `user_id`) VALUES (?)', account_name, hashed_password, address, user_id)
         db.query('COMMIT')
       rescue => e
         puts e.full_message
