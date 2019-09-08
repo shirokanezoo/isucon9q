@@ -172,6 +172,10 @@ module Isucari
         db.xquery('SELECT `user_stats`.* FROM `user_stats` WHERE `id` = ?', user_id).first
       end
 
+      def get_current_user_id
+        session['user_id'].to_i
+      end
+
       def get_user_simple_by_ids(user_ids)
         users = {}
         db.xquery('SELECT id, account_name, num_sell_items FROM `user_stats` WHERE `id` IN (?)', user_ids).each do |user|
@@ -330,10 +334,12 @@ module Isucari
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
             "WHERE `items`.`status` IN (?, ?) " \
+            "AND `items`.`seller_id` != ? " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
             ITEM_STATUS_ON_SALE,
             ITEM_STATUS_SOLD_OUT,
+            get_current_user_id,
             Time.at(created_at),
             Time.at(created_at),
             item_id
@@ -349,9 +355,11 @@ module Isucari
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
             "WHERE `status` IN (?, ?) " \
+            "AND `items`.`seller_id` != ? " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
             ITEM_STATUS_ON_SALE,
-            ITEM_STATUS_SOLD_OUT
+            ITEM_STATUS_SOLD_OUT,
+            get_current_user_id
           )
         end
 
