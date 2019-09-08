@@ -176,6 +176,11 @@ module Isucari
         session['user_id'].to_i
       end
 
+      def category_id_for_user
+        ids = CATEGORIES.keys
+        ids[get_current_user_id % ids.length]
+      end
+
       def get_user_simple_by_ids(user_ids)
         users = {}
         db.xquery('SELECT id, account_name, num_sell_items FROM `user_stats` WHERE `id` IN (?)', user_ids).each do |user|
@@ -339,7 +344,7 @@ module Isucari
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
             [ITEM_STATUS_ON_SALE],
-            1, # FIX: ユーザーごとに
+            category_id_for_user, # FIX: ユーザーごとに
             get_current_user_id,
             Time.at(created_at),
             Time.at(created_at),
@@ -360,7 +365,7 @@ module Isucari
             "AND `items`.`seller_id` != ? " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
             [ITEM_STATUS_ON_SALE],
-            1, # FIX: ユーザーごとに
+            category_id_for_user, # FIX: ユーザーごとに
             get_current_user_id
           )
         end
