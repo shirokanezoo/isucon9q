@@ -9,6 +9,9 @@ EnvironmentFile=/home/isucon/git/env.sh
 
 ExecStart = /home/isucon/git/webapp/ruby/run.sh
 
+StandardOutput=append:/tmp/isu-rack.log
+StandardError=append:/tmp/isu-rack.log
+
 Restart   = always
 Type      = simple
 User      = isucon
