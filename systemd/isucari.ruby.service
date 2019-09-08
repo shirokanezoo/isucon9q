@@ -2,11 +2,12 @@
 Description = isucon9 qualifier main application in ruby
 
 [Service]
+RuntimeDirectory=isucari
 WorkingDirectory=/home/isucon/isucari/webapp/ruby
 EnvironmentFile=/home/isucon/env.secret.sh
 EnvironmentFile=/home/isucon/git/env.sh
 
-ExecStart = /home/isucon/ruby/bin/bundle exec rackup -p 8000
+ExecStart = /home/isucon/isucari/webapp/run.sh
 
 Restart   = always
 Type      = simple
