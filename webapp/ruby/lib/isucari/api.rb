@@ -7,7 +7,7 @@ module Isucari
   class API
     class Error < StandardError; end
 
-    SHIPMENT_CACHE_TTL = 10
+    SHIPMENT_CACHE_TTL = 0
 
     def redis
       Thread.current[:redis] ||= Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost'))
@@ -134,7 +134,7 @@ module Isucari
       if ['initial', 'done'].include?(json['status'])
         redis.set(cache_key, res.body)
       else
-        redis.psetex(cache_key, SHIPMENT_CACHE_TTL, res.body)
+        redis.psetex(cache_key, SHIPMENT_CACHE_TTL, res.body) if SHIPMENT_CACHE_TTL > 0
       end
 
       json
