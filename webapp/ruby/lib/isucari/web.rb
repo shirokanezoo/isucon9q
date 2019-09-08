@@ -309,6 +309,7 @@ module Isucari
 
       cache_with('new_items', if: item_id == 0 && created_at == 0) do
         items = if item_id > 0 && created_at > 0
+          NewRelic::Agent.set_transaction_name('GET /new_items.json (with params)')
           # paging
           db.xquery(
             "SELECT `items`.*, " \
@@ -327,6 +328,7 @@ module Isucari
             item_id
           )
         else
+          NewRelic::Agent.set_transaction_name('GET /new_items.json (w/o params)')
           # 1st page
           db.xquery(
             "SELECT `items`.*, " \
@@ -403,6 +405,7 @@ module Isucari
         category_ids = CATEGORIE_IDS_PER_PARENT[root_category_id]
 
         items = if item_id > 0 && created_at > 0
+          NewRelic::Agent.set_transaction_name('GET /new_items/:root_category_id.json (with params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
@@ -420,6 +423,7 @@ module Isucari
             item_id
           )
         else
+          NewRelic::Agent.set_transaction_name('GET /new_items/:root_category_id.json (w/o params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
