@@ -552,15 +552,11 @@ module Isucari
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id`" \
             "LEFT OUTER JOIN `user_stats` `buyer_stats` ON `buyer_stats`.`user_id` = `items`.`buyer_id` " \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
-            "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
+            "AND `items`.`status` IN (?) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
             user['id'],
             user['id'],
-            ITEM_STATUS_ON_SALE,
-            ITEM_STATUS_TRADING,
-            ITEM_STATUS_SOLD_OUT,
-            ITEM_STATUS_CANCEL,
-            ITEM_STATUS_STOP
+            [ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING]
           )
         rescue => e
           puts e.full_message
