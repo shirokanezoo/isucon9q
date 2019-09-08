@@ -912,7 +912,7 @@ module Isucari
         db.xquery('INSERT INTO `items` (`seller_id`, `status`, `name`, `price`, `description`,`image_name`,`category_id`) VALUES (?, ?, ?, ?, ?, ?, ?)', seller['id'], ITEM_STATUS_ON_SALE, name, price, description, img_name, category['id'])
       rescue
         db.query('ROLLBACK')
-        halt_with_error 500, 'db error'
+        raise
       end
 
       item_id = db.last_id
@@ -922,7 +922,7 @@ module Isucari
         db.xquery('UPDATE `user_stats` SET `num_sell_items` = ?, `last_bump` = ? WHERE `user_id` = ?', seller['num_sell_items'] + 1, now, seller['id'])
       rescue
         db.query('ROLLBACK')
-        halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
