@@ -6,6 +6,12 @@ module Isucari
   class API
     class Error < StandardError; end
 
+    SHIPMENT_CACHE_TTL = 10000
+
+    def redis
+      Thread.current[:redis] ||= Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost'))
+    end
+
     ISUCARI_API_TOKEN = 'Bearer 75ugk2m37a750fwir5xr-22l6h4wmue1bwrubzwd0'
 
     def initialize
@@ -72,7 +78,12 @@ module Isucari
     end
 
     def shipment_status(shipment_url, param)
-      uri = URI.parse("#{shipment_url}/status")
+      key = "#{shipment_url}/status"
+      cache = redis.get(key)
+
+      return JSON.parse(cache) if cache
+
+      uri = URI.parse(key)
 
       req = Net::HTTP::Post.new(uri.path)
       req.body = param.to_json
@@ -87,6 +98,8 @@ module Isucari
       if res.code != '200'
         raise Error, "status code #{res.code}; body #{res.body}"
       end
+
+      redis.psetex(key, SHIPMENT_CACHE_TTL, res.body)
 
       JSON.parse(res.body)
     end
