@@ -837,7 +837,6 @@ module Isucari
           db.query('ROLLBACK')
           halt_with_error 404, 'seller not found'
         end
-        _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', target_item['seller_id']).first
       rescue => e
         puts e.full_message
         db.query('ROLLBACK')
