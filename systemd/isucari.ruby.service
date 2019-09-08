@@ -3,11 +3,11 @@ Description = isucon9 qualifier main application in ruby
 
 [Service]
 RuntimeDirectory=isucari
-WorkingDirectory=/home/isucon/isucari/webapp/ruby
+WorkingDirectory=/home/isucon/git/webapp/ruby
 EnvironmentFile=/home/isucon/env.secret.sh
 EnvironmentFile=/home/isucon/git/env.sh
 
-ExecStart = /home/isucon/isucari/webapp/run.sh
+ExecStart = /home/isucon/git/webapp/ruby/run.sh
 
 Restart   = always
 Type      = simple
