@@ -178,7 +178,13 @@ module Isucari
 
       def category_id_for_user
         ids = CATEGORIES.keys
-        ids[get_current_user_id % ids.length]
+        [
+          ids[get_current_user_id % ids.length],
+          ids[(get_current_user_id + 1) % ids.length],
+          ids[(get_current_user_id + 2) % ids.length],
+          ids[(get_current_user_id + 3) % ids.length],
+          ids[(get_current_user_id + 4) % ids.length],
+        ]
       end
 
       def get_user_simple_by_ids(user_ids)
@@ -339,7 +345,7 @@ module Isucari
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
             "WHERE `items`.`status` IN (?) " \
-            "AND `items`.`category_id` = ? " \
+            "AND `items`.`category_id` IN (?) " \
             "AND `items`.`seller_id` != ? " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
@@ -361,7 +367,7 @@ module Isucari
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id` " \
             "INNER JOIN `categories` ON `items`.`category_id` = `categories`.`id` " \
             "WHERE `status` IN (?) " \
-            "AND `items`.`category_id` = ? " \
+            "AND `items`.`category_id` IN (?) " \
             "AND `items`.`seller_id` != ? " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
             [ITEM_STATUS_ON_SALE],
