@@ -772,12 +772,12 @@ module Isucari
 
       begin
         seller = db.xquery('SELECT * FROM `users` WHERE `id` = ?', target_item['seller_id']).first
-        _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', target_item['seller_id']).first
 
         if seller.nil?
           db.query('ROLLBACK')
           halt_with_error 404, 'seller not found'
         end
+        _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', target_item['seller_id']).first
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
@@ -902,11 +902,11 @@ module Isucari
 
       db.query('BEGIN')
 
-      _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', user['id']).first
-      seller = db.xquery('SELECT * FROM `users` WHERE `id` = ? FOR UPDATE', user['id']).first
+      seller = db.xquery('SELECT * FROM `users` WHERE `id` = ?', user['id']).first
       if seller.nil?
         halt_with_error 404, 'user not found'
       end
+      _seller_stats = db.xquery('SELECT * FROM `user_stats` WHERE `user_id` = ? FOR UPDATE', user['id']).first
 
       begin
         db.xquery('INSERT INTO `items` (`seller_id`, `status`, `name`, `price`, `description`,`image_name`,`category_id`) VALUES (?, ?, ?, ?, ?, ?, ?)', seller['id'], ITEM_STATUS_ON_SALE, name, price, description, img_name, category['id'])
