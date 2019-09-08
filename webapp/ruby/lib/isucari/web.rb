@@ -9,30 +9,6 @@ require 'mysql2-cs-bind'
 require 'bcrypt'
 require 'isucari/api'
 require 'expeditor'
-require 'newrelic_rpm'
-require 'new_relic/agent/method_tracer'
-require 'new_relic/agent/tracer'
-
-class Mysql2ClientWithNewRelic < Mysql2::Client
-  def initialize(*args)
-    super
-  end
-
-  def query(sql, *args)
-    if ENV['LOCAL']
-      puts sql
-      puts caller(0)[1]
-    end
-    callback = -> (result, metrics, elapsed) do
-      NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
-    end
-    op = sql[/^(select|insert|update|delete|begin|commit|rollback)/i] || 'other'
-    table = sql[/\bcategories|configs|items|shippings|transaction_evidences|users|user_stats\b/] || 'other'
-    NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
-      super
-    end
-  end
-end
 
 module Isucari
   class Web < Sinatra::Base
@@ -153,7 +129,7 @@ module Isucari
           'cast_booleans' => true,
           'reconnect' => true,
         }
-        Thread.current[:db] = ENV['NEW_RELIC_AGENT_ENABLED'] ? Mysql2ClientWithNewRelic.new(params) : Mysql2::Client.new(params)
+        Thread.current[:db] = Mysql2::Client.new(params)
       end
 
       def redis
@@ -329,7 +305,6 @@ module Isucari
 
       cache_with('new_items', if: item_id == 0 && created_at == 0) do
         items = if item_id > 0 && created_at > 0
-          NewRelic::Agent.set_transaction_name('GET /new_items.json (with params)')
           # paging
           db.xquery(
             "SELECT `items`.*, " \
@@ -351,7 +326,6 @@ module Isucari
             item_id
           )
         else
-          NewRelic::Agent.set_transaction_name('GET /new_items.json (w/o params)')
           # 1st page
           db.xquery(
             "SELECT `items`.*, " \
@@ -431,7 +405,6 @@ module Isucari
         category_ids = CATEGORIE_IDS_PER_PARENT[root_category_id]
 
         items = if item_id > 0 && created_at > 0
-          NewRelic::Agent.set_transaction_name('GET /new_items/:root_category_id.json (with params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
@@ -449,7 +422,6 @@ module Isucari
             item_id
           )
         else
-          NewRelic::Agent.set_transaction_name('GET /new_items/:root_category_id.json (w/o params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
@@ -517,7 +489,6 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         begin
-          NewRelic::Agent.set_transaction_name('GET /users/transactions.json (with params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
@@ -543,7 +514,6 @@ module Isucari
           halt_with_error 500, 'db error'
         end
       else
-        NewRelic::Agent.set_transaction_name('GET /users/transactions.json (w/o params)')
         # 1st page
         begin
           db.xquery(
