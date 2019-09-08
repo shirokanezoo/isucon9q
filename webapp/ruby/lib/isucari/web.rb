@@ -159,6 +159,18 @@ module Isucari
         db.xquery('SELECT `users`.*, `user_stats`.`num_sell_items`, `user_stats`.`last_bump` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
       end
 
+      def get_user_simple_by_ids(user_ids)
+        users = {}
+        db.xquery('SELECT id, account_name, num_sell_items FROM `users` WHERE `id` IN (?)', user_ids).each do |user|
+          users[user['id']] = {
+            'id' => user['id'],
+            'account_name' => user['account_name'],
+            'num_sell_items' => user['num_sell_items']
+          }
+        end
+        users
+      end
+
       def get_user_simple_by_id(user_id)
         user = db.xquery('SELECT `users`.`id`, `users`.`account_name`, `user_stats`.`num_sell_items` FROM `users` INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` WHERE `users`.`id` = ?', user_id).first
 
@@ -498,6 +510,8 @@ module Isucari
         halt_with_error 500, 'failed to request to shipment service'
       end
 
+      buyers = get_user_simple_by_ids(items.map {|item| item['buyer_id'] }.uniq)
+
       item_details = items.map do |item|
         seller = {
           'id' => item['seller_id'],
@@ -535,7 +549,7 @@ module Isucari
         }
 
         if item['buyer_id'] != 0
-          buyer = get_user_simple_by_id(item['buyer_id'])
+          buyer = buyers[item['buyer_id']]
           if buyer.nil?
             db.query('ROLLBACK')
             halt_with_error 404, 'buyer not found'
