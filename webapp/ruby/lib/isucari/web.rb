@@ -1387,6 +1387,12 @@ module Isucari
       get_index
     end
 
+    get '/site/errortown' do
+      raise "aaaaaaaaaaaaaaaaaa"
+    end
+
+
+
     error Mysql2::Error do
       { 'error' => 'db error' }.to_json
     end
