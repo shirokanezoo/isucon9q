@@ -919,7 +919,8 @@ module Isucari
 
       begin
         img = api_client.shipment_request(get_shipment_service_url, shipping['reserve_id'])
-      rescue
+      rescue => e
+        puts e.full_message
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
       end

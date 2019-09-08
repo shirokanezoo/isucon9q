@@ -80,12 +80,10 @@ module Isucari
         raise Error, "status code #{res.code}; body #{res.body}"
       end
 
-      json = JSON.parse(res.body)
-
       cache_key = "isucari:#{shipment_url}/status/#{reserve_id}"
       redis.del(cache_key)
 
-      json
+      res.body
     end
 
     def shipment_status(shipment_url, reserve_id)
