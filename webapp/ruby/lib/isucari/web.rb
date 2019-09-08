@@ -341,9 +341,10 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `users`.`num_sell_items`" \
-          "FROM `items` " +
+          "`users`.`account_name`, `user_stats`.`num_sell_items`" \
+          "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND `items`.`category_id` IN (?) " +
           "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -358,9 +359,10 @@ module Isucari
       else
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `users`.`num_sell_items` " \
+          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
           "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
+          "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
           "WHERE `items`.`status` IN (?, ?) " \
           "AND `items`.`category_id` IN (?) " +
           "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{ITEMS_PER_PAGE + 1}",
