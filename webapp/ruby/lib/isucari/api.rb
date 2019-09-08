@@ -1,6 +1,7 @@
 require 'json'
 require 'uri'
 require 'net/http'
+require 'expeditor'
 
 module Isucari
   class API
@@ -16,6 +17,25 @@ module Isucari
 
     def initialize
       @user_agent = 'isucon9-qualify-webapp'
+
+      @expeditor = Expeditor::Service.new(
+        executor: Concurrent::ThreadPoolExecutor.new(
+          min_threads: 16,
+          max_threads: 16,
+          max_queue: 100,
+        )
+      )
+
+    end
+
+    def bulk_shipment_status(shipment_url, ids)
+      commands = ids.map do |id|
+        Expeditor::Command.new(service: @expeditor) do
+          [id, self.shipment_status(shipment_url, id)]
+        end
+      end
+      commands.each(&:start)
+      commands.map(&:get).to_h
     end
 
     def payment_token(payment_url, param)

@@ -3,6 +3,10 @@ GEM
   specs:
     backports (3.15.0)
     bcrypt (3.1.13)
+    concurrent-ruby (1.1.5)
+    expeditor (0.7.0)
+      concurrent-ruby (>= 1.0.0)
+      retryable (> 1.0)
     multi_json (1.13.1)
     mustermann (1.0.3)
     mysql2 (0.5.2)
@@ -16,6 +20,7 @@ GEM
     rack-protection (2.0.7)
       rack
     redis (4.1.2)
+    retryable (3.0.4)
     sinatra (2.0.7)
       mustermann (~> 1.0)
       rack (~> 2.0)
@@ -35,6 +40,7 @@ PLATFORMS
 
 DEPENDENCIES
   bcrypt
+  expeditor
   mysql2
   mysql2-cs-bind
   newrelic_rpm
