@@ -411,6 +411,27 @@ module Isucari
         end
       end
 
+      shippings = db.xquery(
+        "SELECT " \
+        "  `transaction_evidences`.`item_id`" \
+        "  , `transaction_evidences`.`id` as `transaction_evidence_id`" \
+        "  , `transaction_evidences`.`status` as `transaction_evidence_status`" \
+        "  , `shippings`.`reserve_id`" \
+        "FROM `transaction_evidences` " \
+        "INNER JOIN `shippings` ON `shippings`.`transaction_evidence_id` = `transaction_evidences`.`id` " \
+        "WHERE `transaction_evidences`.`item_id` IN (#{items.map{ |_| _['id'] }.join(', ')})"
+      ).map do |row|
+        [row['item_id'], row]
+      end.to_h
+
+      ssrs = begin
+        api_client.bulk_shipment_status(get_shipment_service_url, shippings.each_value.map { |_|  _['reserve_id'] })
+      rescue => e
+        $stderr.puts e.full_message
+        db.query('ROLLBACK')
+        halt_with_error 500, 'failed to request to shipment service'
+      end
+
       item_details = items.map do |item|
         seller = {
           'id' => item['seller_id'],
@@ -458,23 +479,11 @@ module Isucari
           item_detail['buyer'] = buyer
         end
 
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ?', item['id']).first
-        unless transaction_evidence.nil?
-          shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ?', transaction_evidence['id']).first
-          if shipping.nil?
-            db.query('ROLLBACK')
-            halt_with_error 404, 'shipping not found'
-          end
-
-          ssr = begin
-            api_client.shipment_status(get_shipment_service_url, shipping['reserve_id'])
-          rescue => e
-            db.query('ROLLBACK')
-            halt_with_error 500, 'failed to request to shipment service'
-          end
-
-          item_detail['transaction_evidence_id'] = transaction_evidence['id']
-          item_detail['transaction_evidence_status'] = transaction_evidence['status']
+        shipping = shippings[item['id']]
+        if shipping
+          ssr = ssrs.fetch shipping['reserve_id']
+          item_detail['transaction_evidence_id'] = shipping['transaction_evidence_id']
+          item_detail['transaction_evidence_status'] = shipping['transaction_evidence_status']
           item_detail['shipping_status'] = ssr['status']
         end
 
