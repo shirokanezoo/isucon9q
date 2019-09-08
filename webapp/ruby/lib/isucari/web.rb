@@ -359,7 +359,7 @@ module Isucari
       else
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items`, " \
+          "`users`.`account_name`, `user_stats`.`num_sell_items` " \
           "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
           "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
