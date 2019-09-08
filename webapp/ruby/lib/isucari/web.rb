@@ -127,8 +127,14 @@ module Isucari
         get_config_by_name('shipment_service_url') || DEFAULT_SHIPMENT_SERVICE_URL
       end
 
-      def get_image_url(image_name)
-        "/upload/#{image_name}"
+      if ENV['LOCAL']
+        def get_image_url(image_name)
+          "https://isucon9.catatsuy.org/upload/#{image_name}"
+        end
+      else
+        def get_image_url(image_name)
+          "/upload/#{image_name}"
+        end
       end
 
       def body_params
@@ -1195,7 +1201,7 @@ module Isucari
     # getReports
     get '/reports.json' do
       transaction_evidences = db.xquery('SELECT * FROM `transaction_evidences` WHERE `id` > 15007')
-      
+
       response = transaction_evidences.map do |transaction_evidence|
         {
           'id' => transaction_evidence['id'],
