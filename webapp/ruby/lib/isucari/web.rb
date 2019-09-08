@@ -878,7 +878,6 @@ module Isucari
       end
 
       begin
-        _ = db.xquery('SELECT `id` FROM `transaction_evidences` WHERE `item_id` = ? FOR UPDATE', target_item['id'])
         db.xquery('INSERT INTO `transaction_evidences` (`seller_id`, `buyer_id`, `status`, `item_id`, `item_name`, `item_price`, `item_description`,`item_category_id`,`item_root_category_id`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', target_item['seller_id'], buyer['id'], TRANSACTION_EVIDENCE_STATUS_WAIT_SHIPPING, target_item['id'], target_item['name'], target_item['price'], target_item['description'], category['id'], category['parent_id'])
       rescue => e
         puts e.full_message
