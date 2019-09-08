@@ -437,8 +437,11 @@ module Isucari
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
+            ", `buyer_stats`.`account_name` AS `buyer_name`, " \
+            "`buyer_stats`.`num_sell_items` AS `buyer_num_sell_items` " \
             "FROM `items` " \
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id`" \
+            "LEFT OUTER JOIN `user_stats` `buyer_stats` ON `buyer_stats`.`user_id` = `items`.`buyer_id` " \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " \
@@ -465,8 +468,11 @@ module Isucari
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
+            ", `buyer_stats`.`account_name` AS `buyer_name`, " \
+            "`buyer_stats`.`num_sell_items` AS `buyer_num_sell_items` " \
             "FROM `items` " \
             "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `items`.`seller_id`" \
+            "LEFT OUTER JOIN `user_stats` `buyer_stats` ON `buyer_stats`.`user_id` = `items`.`buyer_id` " \
             "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " \
             "AND `items`.`status` IN (?, ?, ?, ?, ?) " \
             "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
@@ -545,14 +551,12 @@ module Isucari
         }
 
         if item['buyer_id'] != 0
-          buyer = buyers[item['buyer_id']]
-          if buyer.nil?
-            db.query('ROLLBACK')
-            halt_with_error 404, 'buyer not found'
-          end
-
           item_detail['buyer_id'] = item['buyer_id']
-          item_detail['buyer'] = buyer
+          item_detail['buyer'] = {
+            'id' => item['buyer_id'],
+            'account_name' => item['buyer_name'],
+            'num_sell_items' => item['buyer_num_sell_items']
+          }
         end
 
         shipping = shippings[item['id']]
@@ -1423,7 +1427,6 @@ module Isucari
         db.xquery('INSERT INTO `users` (`account_name`, `hashed_password`, `address`) VALUES (?, ?, ?)', account_name, hashed_password, address)
         user_id = db.last_id
         db.xquery('INSERT INTO `user_stats` (`account_name`, `hashed_password`, `address`, `user_id`) VALUES (?)', account_name, hashed_password, address, user_id)
-        db.query('COMMIT')
       rescue => e
         puts e.full_message
         db.query('ROLLBACK')
