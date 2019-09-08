@@ -54,14 +54,20 @@ module Isucari
         raise Error, "status code #{res.code}; body #{res.body}"
       end
 
-      JSON.parse(res.body)
+      json = JSON.parse(res.body)
+
+      reserve_id = json['reserve_id']
+      cache_key = "isucari:#{key}/#{reserve_id}"
+      redis.set(cache_key, { status: 'initial', reserve_time: json['reserve_time'] }.to_json)
+
+      json
     end
 
-    def shipment_request(shipment_url, param)
+    def shipment_request(shipment_url, reserve_id)
       uri = URI.parse("#{shipment_url}/request")
 
       req = Net::HTTP::Post.new(uri.path)
-      req.body = param.to_json
+      req.body = { reserve_id: reserve_id }.to_json
       req['Content-Type'] = 'application/json'
       req['User-Agent'] = @user_agent
       req['Authorization'] = ISUCARI_API_TOKEN
@@ -74,7 +80,12 @@ module Isucari
         raise Error, "status code #{res.code}; body #{res.body}"
       end
 
-      res.body
+      json = JSON.parse(res.body)
+
+      cache_key = "isucari:#{key}/#{reserve_id}"
+      redis.del(cache_key)
+
+      json
     end
 
     def shipment_status(shipment_url, reserve_id)
@@ -102,7 +113,7 @@ module Isucari
 
       json = JSON.parse(res.body)
 
-      if ['done'].include?(json['status'])
+      if ['initial', 'done'].include?(json['status'])
         redis.set(cache_key, res.body)
       else
         redis.psetex(cache_key, SHIPMENT_CACHE_TTL, res.body)
