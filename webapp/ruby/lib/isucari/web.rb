@@ -8,6 +8,7 @@ require 'mysql2'
 require 'mysql2-cs-bind'
 require 'bcrypt'
 require 'isucari/api'
+require 'expeditor'
 require 'newrelic_rpm'
 require 'new_relic/agent/method_tracer'
 require 'new_relic/agent/tracer'
@@ -69,6 +70,14 @@ module Isucari
 
     HOSTNUM = ENV['HOSTNUM']
 
+    EXPEDITOR = Expeditor::Service.new(
+      executor: Concurrent::ThreadPoolExecutor.new(
+        min_threads: 16,
+        max_threads: 16,
+        max_queue: 500,
+      )
+    )
+
     CATEGORIES = {
       1  => { 'id' =>  1, 'parent_id' =>  0, 'parent_category_name' => nil, 'category_name' => 'ソファー' },
       2  => { 'id' =>  2, 'parent_id' =>  1, 'parent_category_name' => 'ソファー', 'category_name' => '一人掛けソファー' },
@@ -116,6 +125,8 @@ module Isucari
     }.freeze
     CATEGORIES_PER_PARENT = CATEGORIES.each_value.group_by { |_| _['parent_id'] }
     CATEGORIE_IDS_PER_PARENT = CATEGORIES_PER_PARENT.transform_values { |_| _.map { |c|  c['id'] } }
+
+
 
     configure :development do
       require 'sinatra/reloader'
@@ -884,8 +895,17 @@ module Isucari
         halt_with_error 500, 'db error'
       end
 
+      shipment = Expeditor::Command.new(service: EXPEDITOR) do
+        api_client.shipment_create(get_shipment_service_url, to_address: buyer['address'], to_name: buyer['account_name'], from_address: seller['address'], from_name: seller['account_name'])
+      end
+      shipment.start
+      payment = Expeditor::Command.new(service: EXPEDITOR) do
+        api_client.payment_token(get_payment_service_url, shop_id: PAYMENT_SERVICE_ISUCARI_SHOPID, token: token, api_key: PAYMENT_SERVICE_ISUCARI_APIKEY, price: target_item['price'])
+      end
+      payment.start
+
       begin
-        scr = api_client.shipment_create(get_shipment_service_url, to_address: buyer['address'], to_name: buyer['account_name'], from_address: seller['address'], from_name: seller['account_name'])
+        scr = shipment.get
       rescue => e
         puts e.full_message
         db.query('ROLLBACK')
@@ -893,7 +913,7 @@ module Isucari
       end
 
       begin
-        pstr = api_client.payment_token(get_payment_service_url, shop_id: PAYMENT_SERVICE_ISUCARI_SHOPID, token: token, api_key: PAYMENT_SERVICE_ISUCARI_APIKEY, price: target_item['price'])
+        pstr = payment.get
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'payment service is failed'
