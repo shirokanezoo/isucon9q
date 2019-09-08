@@ -6,7 +6,7 @@ module Isucari
   class API
     class Error < StandardError; end
 
-    SHIPMENT_CACHE_TTL = 10000
+    SHIPMENT_CACHE_TTL = 100
 
     def redis
       Thread.current[:redis] ||= Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost'))
