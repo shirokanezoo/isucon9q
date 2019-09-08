@@ -17,7 +17,10 @@ class Mysql2ClientWithNewRelic < Mysql2::Client
   end
 
   def query(sql, *args)
-    puts sql if ENV['LOCAL']
+    if ENV['LOCAL']
+      puts sql
+      puts caller(0)[1]
+    end
     callback = -> (result, metrics, elapsed) do
       NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
     end
@@ -352,13 +355,13 @@ module Isucari
         begin
           db.xquery(
             "SELECT *, " +
-            "`users`.`account_name`, `users`.`num_sell_items`, " +
+            "`users`.`account_name`, `users`.`num_sell_items` " +
             "FROM `items` " +
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-            "WHERE (`seller_id` = ? OR `buyer_id` = ?) " +
-            "AND `status` IN (?, ?, ?, ?, ?) AND " +
-            "(`created_at` < ?  OR (`created_at` <= ? AND `id` < ?)) " +
-            "ORDER BY `created_at` DESC, `id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
+            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " +
+            "AND `items`.`status` IN (?, ?, ?, ?, ?) " +
+            "AND (`items`.`created_at` < ?  OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) " +
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
             user['id'],
             user['id'],
             ITEM_STATUS_ON_SALE,
@@ -379,13 +382,12 @@ module Isucari
         begin
           db.xquery(
             "SELECT *, " +
-            "`users`.`account_name`, `users`.`num_sell_items`, " +
+            "`users`.`account_name`, `users`.`num_sell_items` " +
             "FROM `items` "+
             "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " +
-            "WHERE (`seller_id` = ? OR `buyer_id` = ?) "+
-            "AND `status` IN (?, ?, ?, ?, ?)  "+
-            "ORDER BY `created_at` DESC, `id` DESC "+
-            "LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
+            "WHERE (`items`.`seller_id` = ? OR `items`.`buyer_id` = ?) " +
+            "AND `items`.`status` IN (?, ?, ?, ?, ?) " +
+            "ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}",
             user['id'],
             user['id'],
             ITEM_STATUS_ON_SALE,
@@ -394,7 +396,8 @@ module Isucari
             ITEM_STATUS_CANCEL,
             ITEM_STATUS_STOP
           )
-        rescue
+        rescue => e
+          puts e.full_message
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
         end
@@ -457,7 +460,7 @@ module Isucari
 
           ssr = begin
             api_client.shipment_status(get_shipment_service_url, 'reserve_id' => shipping['reserve_id'])
-          rescue
+          rescue => e
             db.query('ROLLBACK')
             halt_with_error 500, 'failed to request to shipment service'
           end
