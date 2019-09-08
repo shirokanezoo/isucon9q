@@ -190,6 +190,8 @@ module Isucari
       end
 
       def get_config_by_name(name)
+        return redis.get("isucari:config:#{name}")
+
         config = db.xquery('SELECT * FROM `configs` WHERE `name` = ?', name).first
 
         return if config.nil?
@@ -284,6 +286,7 @@ module Isucari
       ['payment_service_url', 'shipment_service_url'].each do |name|
         value = body_params[name]
 
+        redis.post("isucari:config:#{name}", value)
         db.xquery('INSERT INTO `configs` (name, val) VALUES (?, ?) ON DUPLICATE KEY UPDATE `val` = VALUES(`val`)', name, value)
       end
 
