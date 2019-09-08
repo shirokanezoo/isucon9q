@@ -115,7 +115,7 @@ module Isucari
       66 => { 'id' => 66, 'parent_id' => 60, 'parent_category_name' => '座椅子', 'category_name' => '空気椅子' },
     }.freeze
     CATEGORIES_PER_PARENT = CATEGORIES.each_value.group_by { |_| _['parent_id'] }
-    CATEGORIE_IDS_PER_PARENT = CATEGORIES_PER_PARENT.transform_value { |_| _.map { |c|  c['id'] } }
+    CATEGORIE_IDS_PER_PARENT = CATEGORIES_PER_PARENT.transform_values { |_| _.map { |c|  c['id'] } }
 
     configure :development do
       require 'sinatra/reloader'
