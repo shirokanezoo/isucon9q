@@ -65,7 +65,7 @@ module Isucari
     ITEMS_PER_PAGE = 48
     TRANSACTIONS_PER_PAGE = 10
 
-    BCRYPT_COST = 10
+    BCRYPT_COST = 4
 
     HOSTNUM = ENV['HOSTNUM']
 
