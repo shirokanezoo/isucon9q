@@ -205,6 +205,7 @@ module Isucari
         get_config_by_name('shipment_service_url') || DEFAULT_SHIPMENT_SERVICE_URL
       end
 
+      IMG_SERVER_MAP = ENV['IMG_SERVER_MAP']&.split(?,)&.map { |_| _.split(?:,2) }&.to_h
       if ENV['LOCAL']
         def get_image_url(image_name)
           "https://isucon9.catatsuy.org/upload/#{image_name}"
@@ -224,6 +225,7 @@ module Isucari
           end
         end
       end
+
 
       def body_params
         @body_params ||= JSON.parse(request.body.tap(&:rewind).read)
