@@ -16,7 +16,7 @@ pidfile '/run/isucari/puma.pid'
 stdout_redirect '/tmp/isu-rack.log', '/tmp/isu-rack.log', true
 
 threads 6,6
-workers 4
+workers 6
 
 bind 'unix:///run/isucari/puma.sock'
 
