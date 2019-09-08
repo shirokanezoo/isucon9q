@@ -9,8 +9,8 @@ EnvironmentFile=/home/isucon/git/env.sh
 
 ExecStart = /home/isucon/git/webapp/ruby/run.sh
 
-StandardOutput=append:/tmp/isu-rack.log
-StandardError=inherit
+StandardOutput=file:/tmp/isu-rack.systemd.log
+StandardError=file:/tmp/isu-rack.systemd.log
 
 Restart   = always
 Type      = simple
