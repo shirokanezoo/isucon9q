@@ -10,3 +10,4 @@ SELECT
 FROM `users`;
 ALTER TABLE `users` DROP COLUMN `num_sell_items`;
 ALTER TABLE `users` DROP COLUMN `last_bump`;
+ALTER TABLE `shippings` DROP COLUMN `img_binary`;

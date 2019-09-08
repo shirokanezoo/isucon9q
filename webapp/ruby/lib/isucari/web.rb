@@ -1108,11 +1108,14 @@ module Isucari
       end
 
       begin
-        db.xquery('UPDATE `shippings` SET `status` = ?, `img_binary` = ?, `updated_at` = ? WHERE `transaction_evidence_id` = ?', SHIPPINGS_STATUS_WAIT_PICKUP, img, Time.now, transaction_evidence['id'])
+        db.xquery('UPDATE `shippings` SET `status` = ?, `image_name` = ?,  `updated_at` = ? WHERE `transaction_evidence_id` = ?', SHIPPINGS_STATUS_WAIT_PICKUP, "#{HOSTNUM}/", Time.now, transaction_evidence['id'])
       rescue => e
         puts e.full_message
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+      end
+      File.open("/home/isucon/public.local/upload/#{HOSTNUM}/tx_#{transaction_evidence['id']}.png", 'wb') do |io|
+        io.write img
       end
 
       db.query('COMMIT')
@@ -1369,10 +1372,10 @@ module Isucari
         halt_with_error 403, 'qrcode not available'
       end
 
-      halt_with_error 500, 'empty qrcode image' if shipping['img_binary'].length.zero?
+      halt_with_error 500, 'empty qrcode image' if !shipping['image_name'] || shipping['image_name'].empty?
 
       content_type 'image/png'
-      shipping['img_binary']
+      headers 'X-Accel-Redirect' => "/upload/#{shipping['image_name']}tx_#{transaction_evidence_id['id']}.png"
     end
 
     # postBump
