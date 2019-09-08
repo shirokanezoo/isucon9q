@@ -19,7 +19,7 @@ class Mysql2ClientWithNewRelic < Mysql2::Client
       NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
     end
     op = sql[/^(select|insert|update|delete)/i] || 'other'
-    table = sql[/\breservations|sheets|events\b/]
+    table = sql[/\bcategories|configs|items|shippings|transaction_evidences|users\b/] || 'other'
     NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
       super
     end
