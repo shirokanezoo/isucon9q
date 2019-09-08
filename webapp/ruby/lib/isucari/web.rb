@@ -1375,7 +1375,7 @@ module Isucari
       halt_with_error 500, 'empty qrcode image' if !shipping['image_name'] || shipping['image_name'].empty?
 
       content_type 'image/png'
-      headers 'X-Accel-Redirect' => "/upload/#{shipping['image_name']}tx_#{transaction_evidence_id['id']}.png"
+      headers 'X-Accel-Redirect' => "/upload/#{shipping['image_name']}tx_#{transaction_evidence_id}.png"
     end
 
     # postBump
