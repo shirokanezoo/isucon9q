@@ -114,6 +114,8 @@ module Isucari
       65 => { 'id' => 65, 'parent_id' => 60, 'parent_category_name' => '座椅子', 'category_name' => '座布団' },
       66 => { 'id' => 66, 'parent_id' => 60, 'parent_category_name' => '座椅子', 'category_name' => '空気椅子' },
     }.freeze
+    CATEGORIES_PER_PARENT = CATEGORIES.each_value.group_by { |_| _['parent_id'] }
+    CATEGORIE_IDS_PER_PARENT = CATEGORIES_PER_PARENT.transform_value { |_| _.map { |c|  c['id'] } }
 
     configure :development do
       require 'sinatra/reloader'
@@ -345,7 +347,7 @@ module Isucari
       root_category = get_category_by_id(root_category_id)
       halt_with_error 404, 'category not found' if root_category.nil?
 
-      category_ids = db.xquery('SELECT id FROM `categories` WHERE parent_id = ?', root_category['id']).map { |row| row['id'] }
+      category_ids = CATEGORIE_IDS_PER_PARENT[root_category_id]
 
       item_id = params['item_id'].to_i
       created_at = params['created_at'].to_i
@@ -1384,8 +1386,7 @@ module Isucari
       response['user'] = user unless user.nil?
       response['payment_service_url'] = get_payment_service_url
 
-      categories = db.xquery('SELECT * FROM `categories`').to_a
-      response['categories'] = categories
+      response['categories'] = CATEGORIES.values
 
       response.to_json
     end
