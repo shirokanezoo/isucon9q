@@ -5,6 +5,26 @@ require 'mysql2'
 require 'mysql2-cs-bind'
 require 'bcrypt'
 require 'isucari/api'
+require 'newrelic_rpm'
+require 'new_relic/agent/method_tracer'
+require 'new_relic/agent/tracer'
+
+class Mysql2ClientWithNewRelic < Mysql2::Client
+  def initialize(*args)
+    super
+  end
+
+  def query(sql, *args)
+    callback = -> (result, metrics, elapsed) do
+      NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
+    end
+    op = sql[/^(select|insert|update|delete)/i] || 'other'
+    table = sql[/\breservations|sheets|events\b/]
+    NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
+      super
+    end
+  end
+end
 
 module Isucari
   class Web < Sinatra::Base
@@ -53,7 +73,8 @@ module Isucari
 
     helpers do
       def db
-        Thread.current[:db] ||= Mysql2::Client.new(
+        return Thread.current[:db] if Thread.current[:db]
+        params = {
           'host' => ENV['MYSQL_HOST'] || '127.0.0.1',
           'port' => ENV['MYSQL_PORT'] || '3306',
           'database' => ENV['MYSQL_DBNAME'] || 'isucari',
@@ -63,7 +84,8 @@ module Isucari
           'database_timezone' => :local,
           'cast_booleans' => true,
           'reconnect' => true,
-        )
+        }
+        Thread.current[:db] = ENV['NEW_RELIC_AGENT_ENABLED'] ? Mysql2ClientWithNewRelic.new(params) : Mysql2::Client.new(params)
       end
 
       def api_client
