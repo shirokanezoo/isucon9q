@@ -502,6 +502,7 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         begin
+          NewRelic::Agent.set_transaction_name('GET /users/transactions.json (with params)')
           db.xquery(
             "SELECT `items`.*, " \
             "`user_stats`.`account_name`, `user_stats`.`num_sell_items` " \
@@ -531,6 +532,7 @@ module Isucari
           halt_with_error 500, 'db error'
         end
       else
+        NewRelic::Agent.set_transaction_name('GET /users/transactions.json (w/o params)')
         # 1st page
         begin
           db.xquery(
