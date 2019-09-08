@@ -376,6 +376,7 @@ module Isucari
         rescue
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
+          raise
         end
       else
         # 1st page
@@ -400,6 +401,7 @@ module Isucari
           puts e.full_message
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
+          raise
         end
       end
 
@@ -463,6 +465,7 @@ module Isucari
           rescue => e
             db.query('ROLLBACK')
             halt_with_error 500, 'failed to request to shipment service'
+            raise
           end
 
           item_detail['transaction_evidence_id'] = transaction_evidence['id']
@@ -637,6 +640,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       target_item = db.xquery('SELECT * FROM `items` WHERE `id` = ?', item_id).first
@@ -676,6 +680,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if target_item['status'] != ITEM_STATUS_ON_SALE
@@ -698,6 +703,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       category = get_category_by_id(target_item['category_id'])
@@ -711,6 +717,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       transaction_evidence_id = db.last_id
@@ -720,6 +727,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -727,6 +735,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
+        raise
       end
 
       begin
@@ -734,6 +743,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'payment service is failed'
+        raise
       end
 
       if pstr['status'] == 'invalid'
@@ -756,6 +766,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
@@ -828,6 +839,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       item_id = db.last_id
@@ -838,6 +850,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
@@ -872,6 +885,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if item['status'] != ITEM_STATUS_TRADING
@@ -889,6 +903,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if transaction_evidence['status'] != TRANSACTION_EVIDENCE_STATUS_WAIT_SHIPPING
@@ -906,6 +921,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -913,6 +929,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
+        raise
       end
 
       begin
@@ -920,6 +937,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
@@ -961,6 +979,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if item['status'] != ITEM_STATUS_TRADING
@@ -978,6 +997,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if transaction_evidence['status'] != TRANSACTION_EVIDENCE_STATUS_WAIT_SHIPPING
@@ -994,6 +1014,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1001,6 +1022,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
+        raise
       end
 
       if !(ssr['status'] == SHIPPINGS_STATUS_SHIPPING || ssr['status'] == SHIPPINGS_STATUS_DONE)
@@ -1013,6 +1035,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1020,6 +1043,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
 
@@ -1061,6 +1085,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if item['status'] != ITEM_STATUS_TRADING
@@ -1078,6 +1103,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if transaction_evidence['status'] != TRANSACTION_EVIDENCE_STATUS_WAIT_DONE
@@ -1095,6 +1121,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1102,6 +1129,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
+        raise
       end
 
       if ssr['status'] != SHIPPINGS_STATUS_DONE
@@ -1114,6 +1142,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1121,6 +1150,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1128,6 +1158,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
@@ -1188,6 +1219,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       if target_item['seller_id'] != user['id']
@@ -1205,6 +1237,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       now = Time.now
@@ -1218,6 +1251,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1225,6 +1259,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       begin
@@ -1232,6 +1267,7 @@ module Isucari
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'db error'
+        raise
       end
 
       db.query('COMMIT')
