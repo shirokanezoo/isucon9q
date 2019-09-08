@@ -250,7 +250,9 @@ module Isucari
       end
 
       def purge_category(category)
+        category = get_category_by_id(category['id'])
         purge_cache("categories/#{category['id']}")
+        purge_cache("categories/#{category['parent_id']}")
       end
 
       def purge_user(user)
