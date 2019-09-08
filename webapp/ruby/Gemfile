@@ -6,6 +6,7 @@ gem 'mysql2'
 gem 'mysql2-cs-bind'
 gem 'bcrypt'
 gem 'newrelic_rpm'
+gem 'redis'
 
 group :development do
   gem 'sinatra-contrib'

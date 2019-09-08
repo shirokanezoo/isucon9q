@@ -1,5 +1,6 @@
 # rubocop:disable all
 
+require 'redis'
 require 'json'
 require 'securerandom'
 require 'sinatra/base'
@@ -94,6 +95,10 @@ module Isucari
           'reconnect' => true,
         }
         Thread.current[:db] = ENV['NEW_RELIC_AGENT_ENABLED'] ? Mysql2ClientWithNewRelic.new(params) : Mysql2::Client.new(params)
+      end
+
+      def redis
+        Thread.current[:redis] ||= Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost'))
       end
 
       def api_client
