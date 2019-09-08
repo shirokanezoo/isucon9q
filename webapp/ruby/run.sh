@@ -1,5 +1,5 @@
 #!/bin/bash -x
-export PATH=/home/isucon/ruby-trunk/bin:$PATH
+export PATH=/home/isucon/ruby/bin:$PATH
 #export RUBYOPT='--enable=jit --jit-warnings'
 
 if [[ "$#" -lt 1 ]]; then
