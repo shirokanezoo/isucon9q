@@ -286,7 +286,7 @@ module Isucari
       ['payment_service_url', 'shipment_service_url'].each do |name|
         value = body_params[name]
 
-        redis.post("isucari:config:#{name}", value)
+        redis.set("isucari:config:#{name}", value)
         db.xquery('INSERT INTO `configs` (name, val) VALUES (?, ?) ON DUPLICATE KEY UPDATE `val` = VALUES(`val`)', name, value)
       end
 
