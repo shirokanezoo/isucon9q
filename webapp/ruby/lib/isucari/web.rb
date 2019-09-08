@@ -341,7 +341,7 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         db.xquery(
           "SELECT `items`.*, " \
-          "`users`.`account_name`, `user_stats`.`num_sell_items`" \
+          "`users`.`account_name`, `user_stats`.`num_sell_items` " \
           "FROM `items` " \
           "INNER JOIN `users` ON `items`.`seller_id` = `users`.`id` " \
           "INNER JOIN `user_stats` ON `user_stats`.`user_id` = `users`.`id` " \
