@@ -185,6 +185,9 @@ module Isucari
 
     # postInitialize
     post '/initialize' do
+      redis.keys('isucari:*').each_slice(100) do |ks|
+        redis.del(*ks)
+      end
       unless system "#{settings.root}/../sql/init.sh"
         halt_with_error 500, 'exec init.sh error'
       end

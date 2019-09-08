@@ -79,7 +79,8 @@ module Isucari
 
     def shipment_status(shipment_url, param)
       key = "#{shipment_url}/status"
-      cache = redis.get(key)
+      cache_key = "isucari:#{key}/#{param['reserve_id']}"
+      cache = redis.get(cache_key)
 
       return JSON.parse(cache) if cache
 
@@ -99,9 +100,15 @@ module Isucari
         raise Error, "status code #{res.code}; body #{res.body}"
       end
 
-      redis.psetex(key, SHIPMENT_CACHE_TTL, res.body)
+      json = JSON.parse(res.body)
 
-      JSON.parse(res.body)
+      if ['done'].include?(json['status'])
+        redis.set(cache_key, res.body)
+      else
+        redis.psetex(cache_key, SHIPMENT_CACHE_TTL, res.body)
+      end
+
+      json
     end
   end
 end
