@@ -513,8 +513,6 @@ module Isucari
         halt_with_error 500, 'failed to request to shipment service'
       end
 
-      buyers = get_user_simple_by_ids(items.map {|item| item['buyer_id'] }.uniq)
-
       item_details = items.map do |item|
         seller = {
           'id' => item['seller_id'],
@@ -526,7 +524,7 @@ module Isucari
           halt_with_error 404, 'seller not found'
         end
 
-        category = buyers[item['category_id']]
+        category = get_category_by_id(item['category_id'])
         if category.nil?
           db.query('ROLLBACK')
           halt_with_error 404, 'category not found'
