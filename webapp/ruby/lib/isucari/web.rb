@@ -211,7 +211,17 @@ module Isucari
         end
       else
         def get_image_url(image_name)
-          "/upload/#{image_name}"
+          if IMG_SERVER_MAP
+            num, path = image_name.split(?/,2)
+            srv = IMG_SERVER_MAP[num]
+            if num && path && srv
+              "http://#{srv}/upload/#{image_name}"
+            else
+              "/upload/#{image_name}"
+            end
+          else
+            "/upload/#{image_name}"
+          end
         end
       end
 
