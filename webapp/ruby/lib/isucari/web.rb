@@ -182,7 +182,6 @@ module Isucari
           ids[get_current_user_id % ids.length],
           ids[(get_current_user_id + 1) % ids.length],
           ids[(get_current_user_id + 2) % ids.length],
-          ids[(get_current_user_id + 3) % ids.length],
         ]
       end
 
