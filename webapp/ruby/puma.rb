@@ -13,7 +13,7 @@ pidfile '/run/isucari/puma.pid'
 # Redirect STDOUT and STDERR to files specified. The 3rd parameter
 # ("append") specifies whether the output is appended, the default is
 # "false".
-#stdout_redirect '/tmp/isu-rack.log', '/tmp/isu-rack.log', true
+stdout_redirect '/tmp/isu-rack.log', '/tmp/isu-rack.log', true
 
 threads 6,6
 workers 2
