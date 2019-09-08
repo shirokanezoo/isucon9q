@@ -1,0 +1,14 @@
+
+Host isu1
+  Hostname 47.91.19.184
+Host isu2
+  Hostname 47.74.39.177
+Host isu3
+  Hostname 47.74.36.22
+Host isu1 isu2 isu3 isu4
+  Port 22
+  User root
+  IdentityFile ~/.ssh/id_rsa.shirokanezoo
+  IdentityFile ~/.ssh/id_ecdsa.my
+  IdentitiesOnly yes
+
