@@ -69,6 +69,52 @@ module Isucari
 
     HOSTNUM = ENV['HOSTNUM']
 
+    CATEGORIES = {
+      1  => { id:  1, parent_id:  0, parent_category_name: nil, category_name: 'ソファー' },
+      2  => { id:  2, parent_id:  1, parent_category_name: 'ソファー', category_name: '一人掛けソファー' },
+      3  => { id:  3, parent_id:  1, parent_category_name: 'ソファー', category_name: '二人掛けソファー' },
+      4  => { id:  4, parent_id:  1, parent_category_name: 'ソファー', category_name: 'コーナーソファー' },
+      5  => { id:  5, parent_id:  1, parent_category_name: 'ソファー', category_name: '二段ソファー' },
+      6  => { id:  6, parent_id:  1, parent_category_name: 'ソファー', category_name: 'ソファーベッド' },
+      10 => { id: 10, parent_id:  0, parent_category_name: nil, category_name: '家庭用チェア' },
+      11 => { id: 11, parent_id: 10, parent_category_name: '家庭用チェア', category_name: 'スツール' },
+      12 => { id: 12, parent_id: 10, parent_category_name: '家庭用チェア', category_name: 'クッションスツール' },
+      13 => { id: 13, parent_id: 10, parent_category_name: '家庭用チェア', category_name: 'ダイニングチェア' },
+      14 => { id: 14, parent_id: 10, parent_category_name: '家庭用チェア', category_name: 'リビングチェア' },
+      15 => { id: 15, parent_id: 10, parent_category_name: '家庭用チェア', category_name: 'カウンターチェア' },
+      20 => { id: 20, parent_id:  0, parent_category_name: nil, category_name: 'キッズチェア' },
+      21 => { id: 21, parent_id: 20, parent_category_name: 'キッズチェア', category_name: '学習チェア' },
+      22 => { id: 22, parent_id: 20, parent_category_name: 'キッズチェア', category_name: 'ベビーソファ' },
+      23 => { id: 23, parent_id: 20, parent_category_name: 'キッズチェア', category_name: 'キッズハイチェア' },
+      24 => { id: 24, parent_id: 20, parent_category_name: 'キッズチェア', category_name: 'テーブルチェア' },
+      30 => { id: 30, parent_id:  0, parent_category_name: nil, category_name: 'オフィスチェア' },
+      31 => { id: 31, parent_id: 30, parent_category_name: 'オフィスチェア', category_name: 'デスクチェア' },
+      32 => { id: 32, parent_id: 30, parent_category_name: 'オフィスチェア', category_name: 'ビジネスチェア' },
+      33 => { id: 33, parent_id: 30, parent_category_name: 'オフィスチェア', category_name: '回転チェア' },
+      34 => { id: 34, parent_id: 30, parent_category_name: 'オフィスチェア', category_name: 'リクライニングチェア' },
+      35 => { id: 35, parent_id: 30, parent_category_name: 'オフィスチェア', category_name: '投擲用椅子' },
+      40 => { id: 40, parent_id:  0, parent_category_name: nil, category_name: '折りたたみ椅子' },
+      41 => { id: 41, parent_id: 40, parent_category_name: '折りたたみ椅子', category_name: 'パイプ椅子' },
+      42 => { id: 42, parent_id: 40, parent_category_name: '折りたたみ椅子', category_name: '木製折りたたみ椅子' },
+      43 => { id: 43, parent_id: 40, parent_category_name: '折りたたみ椅子', category_name: 'キッチンチェア' },
+      44 => { id: 44, parent_id: 40, parent_category_name: '折りたたみ椅子', category_name: 'アウトドアチェア' },
+      45 => { id: 45, parent_id: 40, parent_category_name: '折りたたみ椅子', category_name: '作業椅子' },
+      50 => { id: 50, parent_id:  0, parent_category_name: nil, category_name: 'ベンチ' },
+      51 => { id: 51, parent_id: 50, parent_category_name: 'ベンチ', category_name: '一人掛けベンチ' },
+      52 => { id: 52, parent_id: 50, parent_category_name: 'ベンチ', category_name: '二人掛けベンチ' },
+      53 => { id: 53, parent_id: 50, parent_category_name: 'ベンチ', category_name: 'アウトドア用ベンチ' },
+      54 => { id: 54, parent_id: 50, parent_category_name: 'ベンチ', category_name: '収納付きベンチ' },
+      55 => { id: 55, parent_id: 50, parent_category_name: 'ベンチ', category_name: '背もたれ付きベンチ' },
+      56 => { id: 56, parent_id: 50, parent_category_name: 'ベンチ', category_name: 'ベンチマーク' },
+      60 => { id: 60, parent_id:  0, parent_category_name: nil, category_name: '座椅子' },
+      61 => { id: 61, parent_id: 60, parent_category_name: '座椅子', category_name: '和風座椅子' },
+      62 => { id: 62, parent_id: 60, parent_category_name: '座椅子', category_name: '高座椅子' },
+      63 => { id: 63, parent_id: 60, parent_category_name: '座椅子', category_name: 'ゲーミング座椅子' },
+      64 => { id: 64, parent_id: 60, parent_category_name: '座椅子', category_name: 'ロッキングチェア' },
+      65 => { id: 65, parent_id: 60, parent_category_name: '座椅子', category_name: '座布団' },
+      66 => { id: 66, parent_id: 60, parent_category_name: '座椅子', category_name: '空気椅子' },
+    }.freeze
+
     configure :development do
       require 'sinatra/reloader'
       register Sinatra::Reloader
@@ -126,24 +172,7 @@ module Isucari
       end
 
       def get_category_by_id(category_id)
-        category = db.xquery('SELECT * FROM `categories` WHERE `id` = ?', category_id).first
-
-        return if category.nil?
-
-        parent_category_name = if category['parent_id'] != 0
-          parent_category = get_category_by_id(category['parent_id'])
-
-          return if parent_category.nil?
-
-          parent_category['category_name']
-        end
-
-        {
-          'id' => category['id'],
-          'parent_id' => category['parent_id'],
-          'category_name' => category['category_name'],
-          'parent_category_name' => parent_category_name
-        }
+        CATEGORIES[category_id.to_i]
       end
 
       def get_config_by_name(name)
