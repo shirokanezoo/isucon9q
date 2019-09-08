@@ -77,9 +77,9 @@ module Isucari
       res.body
     end
 
-    def shipment_status(shipment_url, param)
+    def shipment_status(shipment_url, reserve_id)
       key = "#{shipment_url}/status"
-      cache_key = "isucari:#{key}/#{param['reserve_id']}"
+      cache_key = "isucari:#{key}/#{reserve_id}"
       cache = redis.get(cache_key)
 
       return JSON.parse(cache) if cache
@@ -87,7 +87,7 @@ module Isucari
       uri = URI.parse(key)
 
       req = Net::HTTP::Post.new(uri.path)
-      req.body = param.to_json
+      req.body = { reserve_id: reserve_id }.to_json
       req['Content-Type'] = 'application/json'
       req['User-Agent'] = @user_agent
       req['Authorization'] = ISUCARI_API_TOKEN

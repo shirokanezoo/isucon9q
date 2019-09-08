@@ -467,7 +467,7 @@ module Isucari
           end
 
           ssr = begin
-            api_client.shipment_status(get_shipment_service_url, 'reserve_id' => shipping['reserve_id'])
+            api_client.shipment_status(get_shipment_service_url, shipping['reserve_id'])
           rescue => e
             db.query('ROLLBACK')
             halt_with_error 500, 'failed to request to shipment service'
@@ -1005,7 +1005,7 @@ module Isucari
       end
 
       begin
-        ssr = api_client.shipment_status(get_shipment_service_url, reserve_id: shipping['reserve_id'])
+        ssr = api_client.shipment_status(get_shipment_service_url, shipping['reserve_id'])
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
@@ -1106,7 +1106,7 @@ module Isucari
       end
 
       begin
-        ssr = api_client.shipment_status(get_shipment_service_url, reserve_id: shipping['reserve_id'])
+        ssr = api_client.shipment_status(get_shipment_service_url, shipping['reserve_id'])
       rescue
         db.query('ROLLBACK')
         halt_with_error 500, 'failed to request to shipment service'
